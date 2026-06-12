@@ -325,6 +325,292 @@ cd ~/llama.cpp
 - 取下厚手机壳
 - 每组测试之间稍微等手机降温
 
+### 7.4 Vulkan GPU 后端测试记录
+
+目标：让 `llama.cpp` 使用 Snapdragon 8 Gen 3 的 Adreno 750 GPU 跑 GGUF 模型，并通过 `-ngl` 控制 offload 到 GPU 的层数。
+
+#### 7.4.1 安装 Vulkan 工具和依赖
+
+Termux 中先安装 Vulkan 相关工具：
+
+```bash
+pkg install vulkan-tools vulkan-headers shaderc spirv-headers spirv-tools libandroid-spawn
+```
+
+如果执行：
+
+```bash
+vulkaninfo | head
+```
+
+提示：
+
+```text
+The program vulkaninfo is not installed. Install it by executing:
+ pkg install vulkan-tools
+```
+
+说明还没安装 `vulkan-tools`，按提示安装即可：
+
+```bash
+pkg install vulkan-tools
+```
+
+#### 7.4.2 构建 Vulkan 版 llama.cpp
+
+在 Termux 中重新构建一个单独的 Vulkan build：
+
+```bash
+cd ~/llama.cpp
+rm -rf build-vulkan
+
+cmake -B build-vulkan -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DGGML_VULKAN=ON \
+  -DCMAKE_PREFIX_PATH=$PREFIX \
+  -DLLAMA_BUILD_TESTS=OFF \
+  -DLLAMA_BUILD_EXAMPLES=ON \
+  -DLLAMA_BUILD_SERVER=ON \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DCMAKE_EXE_LINKER_FLAGS="-landroid-spawn"
+
+cmake --build build-vulkan --target llama-bench llama-server llama-cli -j4
+```
+
+如果 CMake 报错找不到 `SPIRV-Headers`：
+
+```text
+Could not find a package configuration file provided by "SPIRV-Headers"
+```
+
+安装：
+
+```bash
+pkg install spirv-headers spirv-tools
+```
+
+然后清理 `build-vulkan` 后重新 CMake。
+
+#### 7.4.3 确认 Vulkan 看到的是 Adreno，不是 llvmpipe
+
+检查 Vulkan 设备：
+
+```bash
+vulkaninfo --summary
+```
+
+如果看到：
+
+```text
+deviceName = llvmpipe (LLVM ...)
+deviceType = PHYSICAL_DEVICE_TYPE_CPU
+driverName = llvmpipe
+```
+
+这不是手机 GPU，而是 Mesa 的 CPU 软件 Vulkan。此时即使 `llama-bench` 输出 backend 为 `Vulkan`，也不能当作 GPU 结果。
+
+正确情况下应看到类似：
+
+```text
+deviceName = Adreno (TM) 750
+deviceType = PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU
+driverName = Qualcomm Technologies Inc. Adreno Vulkan Driver
+vendorID = 0x5143
+```
+
+当前实测中，Termux 一开始使用的是 generic Vulkan loader 和 Mesa swrast ICD，所以 `vulkaninfo` 只看到 `llvmpipe`。解决方式是切换到 Android Vulkan loader。
+
+先搜索 Vulkan 包：
+
+```bash
+pkg search vulkan
+```
+
+关键包是：
+
+```text
+vulkan-loader-android
+```
+
+安装：
+
+```bash
+pkg install vulkan-loader-android
+```
+
+如果提示与 `vulkan-loader-generic` 冲突，先卸载 generic loader：
+
+```bash
+pkg uninstall vulkan-loader-generic
+pkg install vulkan-loader-android
+```
+
+也可以确认当前 `libvulkan.so` 指向 Android 系统 loader：
+
+```bash
+ls -l $PREFIX/lib/libvulkan.so*
+```
+
+期望类似：
+
+```text
+/data/data/com.termux/files/usr/lib/libvulkan.so -> /system/lib64/libvulkan.so
+```
+
+再次检查：
+
+```bash
+vulkaninfo --summary
+```
+
+确认设备变成 Adreno 750 后，再运行 Vulkan 版 `llama-bench`。
+
+#### 7.4.4 运行 Vulkan benchmark
+
+最激进的测试是把尽可能多的层 offload 到 GPU：
+
+```bash
+cd ~/llama.cpp/build-vulkan/bin
+
+./llama-bench \
+  -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf \
+  -p 512 \
+  -n 128 \
+  -t 4 \
+  -ngl 99
+```
+
+如果 GPU 被正确识别，开头会显示：
+
+```text
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = Adreno (TM) 750 ...
+```
+
+其中：
+
+- `-ngl 0`：不 offload 层到 GPU，可作为同一个 Vulkan build 下的 CPU 对照。
+- `-ngl 1`：只 offload 很少的层。
+- `-ngl 99`：尽量 offload 所有可 offload 的层。
+
+#### 7.4.5 `ggml_vulkan: No devices found`
+
+曾遇到：
+
+```text
+ggml_vulkan: No devices found.
+```
+
+同时 `vulkaninfo --summary` 显示：
+
+```text
+deviceName = llvmpipe (LLVM 21.1.8, 128 bits)
+deviceType = PHYSICAL_DEVICE_TYPE_CPU
+driverName = llvmpipe
+```
+
+这种情况说明 Vulkan loader 没有接到 Android 系统的 Adreno 驱动，只看到了 CPU 软件 Vulkan。此时 `llama-bench` 的吞吐可能和 CPU 非常接近，例如 Q4_0 的 `tg128` 仍然在 21 tok/s 左右，但这不是 GPU 加速结果。
+
+处理方式：
+
+1. 安装或切换到 `vulkan-loader-android`
+2. 确认 `$PREFIX/lib/libvulkan.so` 指向 `/system/lib64/libvulkan.so`
+3. 用 `vulkaninfo --summary` 确认设备为 Adreno 750
+4. 必要时重新构建 `build-vulkan`
+
+#### 7.4.6 `vk::DeviceLostError`
+
+切到真正的 Adreno 750 后，运行：
+
+```bash
+./llama-bench \
+  -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf \
+  -p 512 \
+  -n 128 \
+  -t 4 \
+  -ngl 99
+```
+
+曾出现：
+
+```text
+libc++abi: terminating due to uncaught exception of type vk::DeviceLostError:
+vk::Queue::submit: ErrorDeviceLost
+```
+
+这说明 GPU 已经接上，但 Vulkan 任务提交后 Adreno 驱动进入 device lost 状态。常见原因包括：
+
+- `-ngl 99` offload 太激进
+- 某些 Vulkan shader / 算子触发驱动问题
+- 模型层数、量化 kernel 或内存压力导致当前后端不稳定
+- llama.cpp Vulkan 后端在当前 Adreno 驱动上还不够稳定
+
+建议不要直接从 `-ngl 99` 开始，而是先用小规模测试找稳定范围：
+
+```bash
+./llama-bench \
+  -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf \
+  -p 128 \
+  -n 32 \
+  -t 4 \
+  -ngl 1
+```
+
+当前实测 `-ngl 1` 可以跑通：
+
+```text
+backend: Vulkan
+ngl: 1
+pp128: 3.57 tok/s
+tg32: 14.86 tok/s
+```
+
+然后逐步增加 `ngl`：
+
+```bash
+for ngl in 1 2 4 8 12 16 24 32 40 48; do
+  echo "=== ngl=$ngl ==="
+  ./llama-bench \
+    -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf \
+    -p 128 \
+    -n 32 \
+    -t 4 \
+    -ngl "$ngl"
+done
+```
+
+如果某个 `ngl` 崩溃，就记录最后一个能稳定跑的值，再用正式参数复测：
+
+```bash
+./llama-bench \
+  -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf \
+  -p 512 \
+  -n 128 \
+  -t 4 \
+  -ngl <stable-ngl>
+```
+
+#### 7.4.7 为什么 GPU throughput 可能不如 CPU
+
+当前实测中，`-ngl 1` 已经使用了 Vulkan / Adreno，但吞吐低于 CPU。这是合理现象，不代表设备没接上 GPU。
+
+原因：
+
+- `-ngl 1` 只 offload 很少的层，大部分计算仍在 CPU 上。
+- GPU offload 会增加 Vulkan 调度、同步和数据流转开销。
+- LLM 的 text generation 是逐 token 生成，小 batch 场景下 GPU 不一定容易吃满。
+- Qwen2.5-3B Q4_0 在 Snapdragon 8 Gen 3 CPU 上本来已经很快，CPU baseline 约 21 tok/s。
+- 当前 Vulkan backend 在 Adreno 上可能还没有 OpenCL 路线成熟。
+
+所以当前判断方式应是：
+
+- `No devices found`：GPU 没接上。
+- `Found 1 Vulkan devices: Adreno 750`：GPU 已接上。
+- `DeviceLost`：GPU 已接上，但当前 `ngl` / 模型 / Vulkan backend 组合不稳定。
+- throughput 低于 CPU：可能是 offload 层数太少或 Vulkan 开销大，不等于没有使用 GPU。
+
+如果目标只是归档 GPU 后端结果，可以记录不同 `ngl` 下的 Vulkan 数据和崩溃点。如果目标是追求更高 GPU throughput，后续建议继续尝试 OpenCL 后端，尤其先测试 `Q4_0`。
+
 ## 8. 模型文件位置
 
 当前模型放在手机：
