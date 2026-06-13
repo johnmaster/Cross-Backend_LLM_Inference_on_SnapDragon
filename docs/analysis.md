@@ -1,48 +1,23 @@
-# data/cpu 分析
+# CPU 与 OpenCL GPU 推理结果分析
 
-本文只分析当前 `data/cpu` 目录下已经归档的 CPU 后端数据。
-
-## 1. 文件概览
-
-`data/cpu` 目录当前包含 3 个文件：
+本文基于当前仓库中的 benchmark 日志：
 
 ```text
-data/cpu/
-├── baseline_threads.log
-├── quant_sweep.log
-└── llama-bench-report.html
+data/cpu/baseline_threads.log
+data/cpu/quant_sweep.log
+data/gpu/opencl_ngl_sweep.log
 ```
 
-各文件含义：
-
-- `baseline_threads.log`：固定 Qwen2.5-3B-Instruct Q4_K_M 模型，扫描不同 CPU 线程数的 `llama-bench` 结果。
-- `quant_sweep.log`：扫描多个 GGUF 量化版本，并在每个量化版本下测试 2、4、6、8 线程。
-- `llama-bench-report.html`：一次 `simpleperf` 采样后生成的 HTML profiling 报告，用于进一步查看函数热点、调用图和火焰图。
-
-日志中的 benchmark 都使用 CPU 后端，主要指标是：
-
-- `pp512`：prompt processing，输入 prompt 处理速度，单位为 tok/s。
-- `tg128`：text generation，输出 token 生成速度，单位为 tok/s。
-
-其中 `tg128` 更接近日常聊天时用户感受到的生成速度。
-
-## 2. baseline_threads.log
-
-`baseline_threads.log` 使用的模型是：
+测试对象主要是 OnePlus 12 / Snapdragon 8 Gen 3 上的 Qwen2.5-3B-Instruct GGUF 模型。CPU 数据来自 `llama-bench` CPU backend；GPU 数据来自 OpenCL backend，并确认运行时识别到：
 
 ```text
-qwen2.5-3b-instruct-q4_k_m.gguf
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
 ```
 
-测试参数：
+## 1. CPU 基线
 
-```text
--p 512
--n 128
-backend: CPU
-```
-
-结果摘要：
+CPU 基线中，Qwen2.5-3B-Instruct Q4_K_M 在线程数 sweep 下的结果如下：
 
 | 线程数 | pp512 tok/s | tg128 tok/s |
 | ---: | ---: | ---: |
@@ -52,121 +27,221 @@ backend: CPU
 | 6 | 67.05 | 17.34 |
 | 8 | 54.85 | 10.83 |
 
-结论：
+CPU 侧主要结论：
 
-- 1 到 4 线程提升很明显，`tg128` 从 4.12 tok/s 提升到 16.90 tok/s。
-- 6 线程的 `pp512` 最高，为 67.05 tok/s；`tg128` 也最高，为 17.34 tok/s。
-- 8 线程性能明显下降，`tg128` 只有 10.83 tok/s，低于 4 线程和 6 线程。
-- 对 Q4_K_M 来说，当前数据下推荐线程数是 4 或 6，不建议默认使用 8 线程。
+- 4 到 6 线程是更合理的区间。
+- 8 线程会明显退化，尤其是 decode 阶段。
+- CPU 上 `tg128` 已经能达到可交互水平。
 
-这个结果说明手机 CPU 推理不是线程越多越好。8 线程可能引入调度开销、内存带宽压力、温控降频，或者让低效核心参与过多，导致生成速度反而下降。
+CPU 量化 sweep 中，每个模型的最佳结果如下。这里把 `pp512` 和 `tg128` 的最优线程数分开记录，因为二者不一定出现在同一个 `-t` 配置上：
 
-## 3. quant_sweep.log
+| 模型文件 | 最佳 pp512 tok/s | pp 最优线程 | 最佳 tg128 tok/s | tg 最优线程 |
+| --- | ---: | ---: | ---: | ---: |
+| qwen2.5-3b-instruct-q4_0.gguf | 107.03 | 6 | 21.67 | 4 |
+| qwen2.5-3b-instruct-q4_k_m.gguf | 61.24 | 6 | 16.70 | 6 |
+| qwen2.5-3b-instruct-q5_k_m.gguf | 44.95 | 6 | 12.77 | 6 |
+| qwen2.5-3b-instruct-q6_k.gguf | 44.92 | 6 | 12.69 | 6 |
+| qwen2.5-3b-instruct-q8_0.gguf | 90.01 | 6 | 12.87 | 6 |
 
-`quant_sweep.log` 覆盖了 5 个模型文件和 4 组线程数：
+从 CPU 结果看，大多数模型在 `t=6` 下取得最佳 prefill。`Q4_0` 是一个例外：它的 `pp512` 最优在 `t=6`，但 `tg128` 最优在 `t=4`。如果目标是聊天生成速度，`Q4_0` 最快；如果目标是质量和速度平衡，`Q4_K_M` 更稳。
+
+## 2. OpenCL 测试设置
+
+OpenCL sweep 日志位于：
 
 ```text
+data/gpu/opencl_ngl_sweep.log
+```
+
+测试参数：
+
+```text
+prompt tokens: 512
+generation tokens: 128
+threads: 4
+ngl list: 0 8 16 24 32 99
 models:
 - qwen2.5-3b-instruct-q4_0.gguf
 - qwen2.5-3b-instruct-q6_k.gguf
-- qwen2.5-3b-instruct-q4_k_m.gguf
 - qwen2.5-3b-instruct-q8_0.gguf
-- qwen2.5-3b-instruct-q5_k_m.gguf
-
-threads:
-- 2
-- 4
-- 6
-- 8
 ```
 
-每个模型的最佳结果如下：
+需要注意：OpenCL 的 `ngl=0` 结果不能直接当作纯 CPU baseline。它仍然运行在 OpenCL build 中，且日志显示 OpenCL platform/device 已初始化；实际吞吐明显低于单独 CPU build。因此 CPU 对照应优先看 `data/cpu/quant_sweep.log`。
 
-| 模型文件 | 日志显示大小 | 最佳线程数 | 最佳 pp512 tok/s | 最佳 tg128 tok/s |
-| --- | ---: | ---: | ---: | ---: |
-| qwen2.5-3b-instruct-q4_0.gguf | 1.86 GiB | 4 | 87.94 | 21.67 |
-| qwen2.5-3b-instruct-q4_k_m.gguf | 1.95 GiB | 6 | 61.24 | 16.70 |
-| qwen2.5-3b-instruct-q5_k_m.gguf | 2.27 GiB | 6 | 44.95 | 12.77 |
-| qwen2.5-3b-instruct-q6_k.gguf | 2.27 GiB | 6 | 44.92 | 12.69 |
-| qwen2.5-3b-instruct-q8_0.gguf | 3.36 GiB | 6 | 90.01 | 12.87 |
+## 3. OpenCL ngl 结果
 
-按 `tg128` 排序：
+### Q4_0
 
-| 排名 | 模型文件 | 最佳 tg128 tok/s | 对应线程数 |
-| ---: | --- | ---: | ---: |
-| 1 | qwen2.5-3b-instruct-q4_0.gguf | 21.67 | 4 |
-| 2 | qwen2.5-3b-instruct-q4_k_m.gguf | 16.70 | 6 |
-| 3 | qwen2.5-3b-instruct-q8_0.gguf | 12.87 | 6 |
-| 4 | qwen2.5-3b-instruct-q5_k_m.gguf | 12.77 | 6 |
-| 5 | qwen2.5-3b-instruct-q6_k.gguf | 12.69 | 6 |
+| ngl | pp512 tok/s | tg128 tok/s |
+| ---: | ---: | ---: |
+| 0 | 13.17 | 8.57 |
+| 8 | 12.72 | 8.92 |
+| 16 | 16.50 | 9.62 |
+| 24 | 25.75 | 10.12 |
+| 32 | 42.44 | 9.85 |
+| 99 | 116.45 | 14.05 |
 
-主要观察：
+观察：
 
-- `Q4_0` 的生成速度最高，最佳 `tg128` 为 21.67 tok/s。
-- `Q4_K_M` 的生成速度低于 `Q4_0`，但仍达到 16.70 tok/s，是当前更均衡的选择。
-- `Q8_0` 的 `pp512` 很高，6 线程达到 90.01 tok/s，但 `tg128` 只有 12.87 tok/s；它并不适合作为追求聊天生成速度时的首选。
-- `Q5_K_M` 与日志里的 `q6_k` 结果非常接近，而且日志中二者大小都显示为 2.27 GiB，模型显示名也都类似 `qwen2 3B Q5_K - Medium`。这里建议后续核对 `qwen2.5-3b-instruct-q6_k.gguf` 文件是否确实是 Q6_K。
-- 8 线程在所有模型上都不是最佳选择，并且经常出现明显退化。
+- `pp512` 随 `ngl` 增大显著提升，`ngl=99` 达到 116.45 tok/s。
+- `tg128` 也随 offload 增加有所提升，但最高只有 14.05 tok/s。
+- 相比 CPU Q4_0 最佳值，OpenCL 的 prefill 更快，但 decode 更慢。
 
-如果只根据当前 CPU 数据选默认配置：
+与 CPU 最佳结果对比：
 
-| 目标 | 推荐配置 |
-| --- | --- |
-| 最高生成速度 | `qwen2.5-3b-instruct-q4_0.gguf` + `-t 4` |
-| 速度与质量平衡 | `qwen2.5-3b-instruct-q4_k_m.gguf` + `-t 4` 或 `-t 6` |
-| 更高量化精度但接受较慢速度 | `qwen2.5-3b-instruct-q5_k_m.gguf` 或 `qwen2.5-3b-instruct-q8_0.gguf` + `-t 6` |
+| 后端 | pp512 tok/s | pp 配置 | tg128 tok/s | tg 配置 |
+| --- | ---: | --- | ---: | --- |
+| CPU Q4_0 | 107.03 | `t=6` | 21.67 | `t=4` |
+| OpenCL Q4_0 | 116.45 | `ngl=99, t=4` | 14.05 | `ngl=99, t=4` |
 
-## 4. 线程数规律
+Q4_0 的 OpenCL 结论：相比 CPU 最佳 prefill，OpenCL 仍有小幅提升；但 decode 明显低于 CPU 最佳值，不适合追求最快聊天生成速度。
 
-从两个日志合起来看，线程数规律比较一致：
+### Q6_K
 
-- 2 线程通常已经能明显快于单线程。
-- 4 线程是一个稳定高效的点。
-- 6 线程通常能提高 prompt processing，也经常给出最高或接近最高的生成速度。
-- 8 线程普遍不理想，尤其对 `tg128` 影响明显。
+| ngl | pp512 tok/s | tg128 tok/s |
+| ---: | ---: | ---: |
+| 0 | 9.26 | 7.50 |
+| 8 | 9.28 | 6.27 |
+| 16 | 11.87 | 6.68 |
+| 24 | 16.28 | 7.38 |
+| 32 | 28.01 | 6.73 |
+| 99 | 51.57 | 7.27 |
 
-因此，当前 CPU 数据支持这样的经验规则：
+观察：
+
+- `pp512` 随 `ngl` 增大持续提升，`ngl=99` 达到 51.57 tok/s。
+- `tg128` 没有随 `ngl` 明显提升，整体在 6 到 8 tok/s 之间。
+- 对 Q6_K 来说，OpenCL offload 主要改善 prefill，不改善 decode。
+
+与 CPU 最佳结果对比：
+
+| 后端 | pp512 tok/s | tg128 tok/s |
+| --- | ---: | ---: |
+| CPU Q6_K | 44.92 | 12.69 |
+| OpenCL Q6_K ngl=99 | 51.57 | 7.27 |
+
+Q6_K 的 OpenCL 结论：prefill 略高于 CPU，但 decode 明显低于 CPU。
+
+### Q8_0
+
+| ngl | pp512 tok/s | tg128 tok/s |
+| ---: | ---: | ---: |
+| 0 | 11.18 | 8.59 |
+| 8 | 13.59 | 8.61 |
+| 16 | 17.93 | 8.15 |
+| 24 | 23.60 | 8.76 |
+| 32 | 38.99 | 8.68 |
+| 99 | 65.06 | 9.06 |
+
+观察：
+
+- `pp512` 同样随 `ngl` 增大提升，`ngl=99` 达到 65.06 tok/s。
+- `tg128` 基本稳定在 8 到 9 tok/s，几乎没有从 GPU offload 中受益。
+- Q8_0 文件最大，OpenCL 下 decode 表现不占优。
+
+与 CPU 最佳结果对比：
+
+| 后端 | pp512 tok/s | tg128 tok/s |
+| --- | ---: | ---: |
+| CPU Q8_0 | 90.01 | 12.87 |
+| OpenCL Q8_0 ngl=99 | 65.06 | 9.06 |
+
+Q8_0 的 OpenCL 结论：prefill 和 decode 都没有超过 CPU 最佳结果。
+
+## 4. CPU 与 OpenCL 对比
+
+为了更直观看出 CPU 和 OpenCL GPU 的差异，下面把 CPU 最佳结果与 OpenCL `ngl=99` 结果放在同一张表里。
+
+| 模型 | CPU 最佳 pp512 | OpenCL pp512 | pp512 变化 | CPU 最佳 tg128 | OpenCL tg128 | tg128 变化 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Q4_0 | 107.03 | 116.45 | +8.8% | 21.67 | 14.05 | -35.2% |
+| Q6_K | 44.92 | 51.57 | +14.8% | 12.69 | 7.27 | -42.7% |
+| Q8_0 | 90.01 | 65.06 | -27.7% | 12.87 | 9.06 | -29.6% |
+
+这张表说明：
+
+- `Q4_0` 是 OpenCL 下收益最明显的模型，prefill 相比 CPU 最优 `t=6` 提升约 8.8%。
+- `Q6_K` 的 prefill 也有小幅提升，但 decode 损失较大。
+- `Q8_0` 在 OpenCL 下没有超过 CPU，prefill 和 decode 都下降。
+- 三个模型的 OpenCL decode 都低于 CPU，因此 GPU offload 当前不能提升聊天生成速度。
+
+如果按使用场景排序：
+
+| 场景 | 当前更优配置 | 原因 |
+| --- | --- | --- |
+| 最快聊天输出 | CPU + Q4_0 | `tg128` 最高，为 21.67 tok/s |
+| 长 prompt 输入处理 | OpenCL + Q4_0 + ngl=99 | `pp512` 最高，为 116.45 tok/s |
+| 更高量化精度且稳定 decode | CPU + Q6_K / Q8_0 | OpenCL decode 低于 CPU |
+
+## 5. OpenCL 总体结论
+
+OpenCL 后端已经成功调用 Adreno 750，但性能收益集中在 prefill 阶段。
+
+各模型在 `ngl=99` 下的 OpenCL 最佳摘要：
+
+| 模型 | OpenCL pp512 tok/s | OpenCL tg128 tok/s | 相对 CPU 结论 |
+| --- | ---: | ---: | --- |
+| Q4_0 | 116.45 | 14.05 | prefill 高于 CPU，decode 低于 CPU |
+| Q6_K | 51.57 | 7.27 | prefill 略高于 CPU，decode 低于 CPU |
+| Q8_0 | 65.06 | 9.06 | prefill 和 decode 均低于 CPU 最佳值 |
+
+最重要的规律：
+
+- `ngl` 增大通常会显著提高 `pp512`。
+- `ngl` 增大并不会稳定提高 `tg128`。
+- OpenCL 对长输入 prompt 更有价值，对逐 token decode 帮助有限。
+- 当前聊天生成速度最快的配置仍然是 CPU 上的 `Q4_0`。
+
+## 6. 为什么 prefill 提升而 decode 不提升
+
+`pp512` 和 `tg128` 对硬件的压力不同：
+
+- `pp512` 一次处理 512 个输入 token，并行度更高，GPU 更容易发挥吞吐优势。
+- `tg128` 是逐 token 生成，串行依赖强，每一步都需要 kernel launch、同步和调度。
+- 移动 GPU 在小 batch decode 场景下不一定能跑赢 Snapdragon CPU。
+- OpenCL backend 对不同量化格式的 kernel 优化程度也不一致。
+
+decode 阶段 OpenCL 低于 CPU，主要不是因为 GPU 没接上，而是因为 decode 的计算形态不适合当前这条 OpenCL 路径：
+
+1. 每次只生成一个 token。decode 不是一次处理很多 token，而是生成一个 token、更新 KV cache、再生成下一个 token。单步任务规模小，GPU 很难像 prefill 那样吃满并行度。
+2. GPU 每一步都有固定开销。OpenCL 需要提交 kernel、同步结果、调度下一轮计算；当每轮计算量不大时，这些固定开销会吃掉 GPU 的理论算力优势。
+3. CPU 量化 kernel 已经很成熟。`llama.cpp` 在 ARM CPU 上的量化矩阵/向量计算路径比较直接，数据在 CPU cache 和内存层级中流动更短，对 3B Q4_0 这种模型已经能达到较高 `tg128`。
+4. GPU offload 可能带来额外的数据流转。即使手机是统一内存架构，CPU/GPU 之间仍然有同步、buffer 管理和命令队列开销，不等于完全免费共享。
+5. decode 更接近 memory-bound 和 latency-bound。相比 prefill 的大矩阵并行吞吐，decode 更看重单 token 延迟；移动 GPU 的吞吐优势不一定能转化成低延迟。
+
+所以 OpenCL 的收益集中在 `pp512` 是合理的：prefill 像“大批量并行任务”，decode 更像“很多次小任务串行排队”。当前数据说明 Adreno 750 能提升大块输入处理，但在逐 token 生成阶段，CPU 的低调度开销和成熟 kernel 更占优势。
+
+因此，OpenCL 结果不能简单理解成“GPU 一定比 CPU 快”。更准确的说法是：
 
 ```text
-默认优先测试 -t 4 和 -t 6，不把 -t 8 作为默认最佳配置。
+Adreno OpenCL 可以提升 Q4_0 的 prefill，但当前没有提升 Qwen2.5-3B 的聊天生成速度。
 ```
 
-## 5. llama-bench-report.html
+## 7. 当前推荐
 
-`llama-bench-report.html` 是 `simpleperf` 生成的 HTML 报告。它不是吞吐量日志，而是性能剖析报告，用来分析 CPU 时间花在了哪些函数、调用路径或共享库上。
+如果目标是最快聊天输出：
 
-这个文件后续适合重点查看：
+```text
+CPU + Q4_0 + 4 threads
+```
 
-- Flamegraph
-- Functions
-- Call graph
-- Shared libraries
-- `ggml_*`
-- `llama_*`
-- `matmul`
-- `vec_dot`
-- `quantize`
-- `dequantize`
+如果目标是更长 prompt 的输入处理速度：
 
-当前 Markdown 没有展开 HTML 里的具体函数占比，因为这些信息需要从报告页面中读取并摘录。建议后续把报告中的 Top functions、Top libraries 和主要火焰图结论整理成一个独立的 Markdown 摘要，避免关键分析只保存在 HTML 页面里。
+```text
+OpenCL + Q4_0 + ngl=99
+```
 
-## 6. 当前数据的注意点
+如果目标是继续做 GPU 后端评测：
 
-当前 `data/cpu` 数据已经足够支撑 CPU 后端的初步结论，但还有几点会影响严谨性：
+- 重点保留 `Q4_0`，因为它在 OpenCL 下 prefill 收益最明显。
+- `Q6_K` 可以作为高量化版本补充，但 decode 不佳。
+- `Q8_0` 当前不适合作为 OpenCL 优先配置。
+- 后续可以增加不同 `-p` 长度，例如 `-p 1024`、`-p 2048`，观察 OpenCL 的 prefill 优势是否继续扩大。
 
-1. 日志中没有记录温度、电量、是否插电、手机壳、环境温度等信息。
-2. 移动设备容易受温控影响，连续跑不同配置时，后跑的配置可能处在更热的状态。
-3. 目前日志更像单轮 sweep，正式对比时最好每个配置重复多次。
-4. `q6_k` 的日志显示结果与 Q5_K_M 过于接近，需要核对模型文件。
-5. HTML profiling 报告已经存在，但其中的热点结论还没有被转写成可读的文本分析。
+## 8. 数据注意点
 
-## 7. 总结
-
-只看 `data/cpu`，当前最清楚的结论是：
-
-- CPU 后端已经可以在 OnePlus 12 / Snapdragon 8 Gen 3 上流畅运行 Qwen2.5-3B-Instruct 3B 量级模型。
-- `Q4_0` 速度最快，最佳生成速度约 21.67 tok/s。
-- `Q4_K_M` 更均衡，最佳生成速度约 16.70 到 17.34 tok/s。
-- 线程数推荐优先使用 4 或 6。
-- 8 线程普遍退化，不建议作为默认配置。
-- `llama-bench-report.html` 为后续函数级热点分析提供了基础，但还需要把 HTML 中的关键结论摘录出来。
+1. OpenCL sweep 使用 `threads=4`，CPU 最佳结果中部分模型使用的是 6 线程，因此对比时要注意线程数不同。
+2. OpenCL `ngl=0` 不是纯 CPU baseline，不应用来替代 `data/cpu` 中的 CPU 数据。
+3. 移动设备容易受温度和频率影响，长时间 sweep 后半段可能受到热状态影响。
+4. 当前结果是单轮 sweep，正式报告中建议重复测试并记录均值、方差、温度和电源状态。
+5. OpenCL 后端对不同量化格式支持程度不同，K-quant 模型不应默认纳入 OpenCL 主测试集。

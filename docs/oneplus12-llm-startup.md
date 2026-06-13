@@ -611,6 +611,335 @@ done
 
 如果目标只是归档 GPU 后端结果，可以记录不同 `ngl` 下的 Vulkan 数据和崩溃点。如果目标是追求更高 GPU throughput，后续建议继续尝试 OpenCL 后端，尤其先测试 `Q4_0`。
 
+### 7.5 OpenCL GPU 后端测试记录
+
+目标：使用 `llama.cpp` 的 OpenCL backend 调用 Snapdragon 8 Gen 3 上的 Adreno 750，并对比 CPU / Vulkan 的 prefill 和 decode 表现。
+
+当前实测结论：
+
+- OpenCL 已经能正确识别 Qualcomm / Adreno 750。
+- `Q4_0` 的 prefill 有明显提升。
+- decode 阶段仍低于 CPU baseline，说明聊天生成阶段未必适合当前 OpenCL 路线。
+- 运行时必须优先加载系统 vendor 里的 Qualcomm OpenCL 库，不能只依赖自己推送的 Khronos ICD loader。
+
+#### 7.5.1 Linux 主机交叉编译 OpenCL 版 llama.cpp
+
+OpenCL 版建议在 Linux 主机上用 Android NDK 交叉编译，再推到手机运行。
+
+准备 Android NDK 后，构建 OpenCL ICD Loader：
+
+```bash
+cd ~/dev/llm
+git clone https://github.com/KhronosGroup/OpenCL-Headers
+
+cp -r OpenCL-Headers/CL \
+  ~/android-sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include
+
+git clone https://github.com/KhronosGroup/OpenCL-ICD-Loader
+cd OpenCL-ICD-Loader
+mkdir build_ndk26
+cd build_ndk26
+
+cmake .. -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=$HOME/android-sdk/ndk/26.3.11579264/build/cmake/android.toolchain.cmake \
+  -DOPENCL_ICD_LOADER_HEADERS_DIR=$HOME/android-sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include \
+  -DANDROID_ABI=arm64-v8a \
+  -DANDROID_PLATFORM=24 \
+  -DANDROID_STL=c++_shared
+
+ninja
+
+cp libOpenCL.so \
+  ~/android-sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/
+```
+
+然后编译 OpenCL 版 `llama.cpp`：
+
+```bash
+cd ~/dev/llm/llama.cpp
+mkdir -p build-android-opencl
+cd build-android-opencl
+
+cmake .. -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE=$HOME/android-sdk/ndk/26.3.11579264/build/cmake/android.toolchain.cmake \
+  -DANDROID_ABI=arm64-v8a \
+  -DANDROID_PLATFORM=android-28 \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DGGML_OPENCL=ON \
+  -DLLAMA_BUILD_TESTS=OFF \
+  -DLLAMA_BUILD_EXAMPLES=ON \
+  -DLLAMA_BUILD_SERVER=ON
+
+ninja llama-bench
+```
+
+第一次只需要测 benchmark 时，可以只构建 `llama-bench`，不用等 `llama-cli` / `llama-server`：
+
+```bash
+ninja -j1 llama-bench
+```
+
+如果构建时停在：
+
+```text
+Linking CXX executable bin/llama-cli
+```
+
+可以另开一个终端检查是否真的还在编译：
+
+```bash
+ps -eo pid,ppid,stat,%cpu,%mem,etime,cmd | grep -E "ninja|clang|ld.lld|lld|llama-cli" | grep -v grep
+free -h
+```
+
+如果没有任何 `ninja` / `clang` / `ld.lld` 进程，说明构建进程已经结束或退出，回到 build 目录检查产物即可：
+
+```bash
+cd ~/dev/llm/llama.cpp/build-android-opencl
+ls -lh bin/llama-bench bin/llama-cli bin/llama-server
+```
+
+#### 7.5.2 编译时 OpenCL 量化支持 warning
+
+曾看到编译 warning：
+
+```text
+TODO: implement BF16, Q4_0, Q4_1, Q5_0, Q5_1, Q8_0, IQ4_NL support
+```
+
+这说明当前 `llama.cpp` OpenCL backend 对部分量化 kernel 的实现或优化仍不完整。它不一定导致编译失败，但会影响实际性能。
+
+因此 OpenCL 评测时，不要默认认为所有 GGUF 量化版本都适合 GPU。当前建议优先测试：
+
+```text
+qwen2.5-3b-instruct-q4_0.gguf
+qwen2.5-3b-instruct-q6_k.gguf
+qwen2.5-3b-instruct-q8_0.gguf
+```
+
+不建议第一轮优先测试：
+
+```text
+qwen2.5-3b-instruct-q4_k_m.gguf
+qwen2.5-3b-instruct-q5_k_m.gguf
+```
+
+这些 K-quant 在 CPU 上表现好，但 OpenCL backend 不一定有完整高效路径。
+
+#### 7.5.3 推送 OpenCL 产物到手机
+
+在 Linux 主机执行：
+
+```bash
+adb shell mkdir -p /data/local/tmp/llama-opencl
+
+adb push ~/dev/llm/llama.cpp/build-android-opencl/bin/llama-bench \
+  /data/local/tmp/llama-opencl/
+
+adb shell chmod +x /data/local/tmp/llama-opencl/llama-bench
+```
+
+如果运行时报缺 `libomp.so`：
+
+```text
+CANNOT LINK EXECUTABLE "./llama-bench": library "libomp.so" not found
+```
+
+从 NDK 中找到 aarch64 版本：
+
+```bash
+find ~/android-sdk/ndk/26.3.11579264 -name "libomp.so"
+```
+
+实测路径：
+
+```text
+/home/lingbok/android-sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/17/lib/linux/aarch64/libomp.so
+```
+
+推到手机同一目录：
+
+```bash
+adb push \
+  /home/lingbok/android-sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/17/lib/linux/aarch64/libomp.so \
+  /data/local/tmp/llama-opencl/
+```
+
+如果后续还缺 `libc++_shared.so`，同样从 NDK 的 aarch64 目录推到 `/data/local/tmp/llama-opencl/`。
+
+#### 7.5.4 `ggml_opencl: platform IDs not available`
+
+第一次运行 OpenCL 版时曾出现：
+
+```text
+ggml_opencl: platform IDs not available.
+```
+
+同时 benchmark 仍然输出：
+
+```text
+backend: OpenCL
+```
+
+但这不能说明已经用上 Adreno。`platform IDs not available` 的意思是 `clGetPlatformIDs` 没拿到任何 OpenCL platform，OpenCL 后端虽然编进去了，但运行时没有找到 Qualcomm / Adreno OpenCL 平台。
+
+原因是最初把 Khronos ICD loader 的 `libOpenCL.so` 推到了运行目录：
+
+```text
+/data/local/tmp/llama-opencl/libOpenCL.so
+```
+
+ICD loader 本身不是厂商计算库，它还需要找到 vendor OpenCL runtime。当前手机实际有 Qualcomm OpenCL 库：
+
+```bash
+adb shell 'find /vendor /system/vendor /system -name "*OpenCL*" 2>/dev/null'
+```
+
+实测输出：
+
+```text
+/vendor/lib/libOpenCL.so
+/vendor/lib/libOpenCL_adreno.so
+/vendor/lib64/libOpenCL.so
+/vendor/lib64/libOpenCL_adreno.so
+```
+
+因此需要让程序优先加载 `/vendor/lib64/libOpenCL.so`，而不是运行目录里的 ICD loader。
+
+先把运行目录里的 ICD loader 改名：
+
+```bash
+adb shell mv /data/local/tmp/llama-opencl/libOpenCL.so \
+  /data/local/tmp/llama-opencl/libOpenCL.icd-loader.so
+```
+
+然后运行时把 `/vendor/lib64` 放在 `LD_LIBRARY_PATH` 最前面：
+
+```bash
+adb shell
+cd /data/local/tmp/llama-opencl
+
+LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH \
+./llama-bench \
+  -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf \
+  -p 512 \
+  -n 128 \
+  -t 4 \
+  -ngl 99
+```
+
+成功时会看到：
+
+```text
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+```
+
+这才说明 OpenCL 真正接上了 Adreno 750。
+
+#### 7.5.5 OpenCL benchmark 结果和解释
+
+当前 Qwen2.5-3B-Instruct Q4_0 的 OpenCL 结果：
+
+```text
+model: qwen2.5-3b-instruct-q4_0.gguf
+backend: OpenCL
+ngl: 99
+threads: 4
+pp512: 116.60 tok/s
+tg128: 16.08 tok/s
+```
+
+与 CPU baseline 对比：
+
+```text
+CPU Q4_0 pp512: 87.94 tok/s
+CPU Q4_0 tg128: 21.67 tok/s
+```
+
+结论：
+
+- OpenCL 明显提升了 prefill / prompt processing，`pp512` 从约 88 tok/s 提升到约 117 tok/s。
+- OpenCL 的 decode / text generation 仍低于 CPU，`tg128` 约 16 tok/s，而 CPU 约 22 tok/s。
+- 这说明 Adreno OpenCL 对长 prompt 的输入处理有帮助，但聊天生成速度不一定更快。
+
+原因：
+
+- prefill 一次处理多个 token，并行度更高，GPU 更容易发挥作用。
+- decode 是逐 token 生成，串行依赖强，每轮 kernel launch / 同步开销更明显。
+- 移动 GPU 对小 batch LLM decode 不一定比 Snapdragon CPU 更占优。
+- 当前 OpenCL backend 对部分量化 kernel 的实现和优化仍在发展中。
+
+因此，OpenCL 结果不能只看 `tg128`，也不能只看 `pp512`。如果目标是长上下文输入，OpenCL 有价值；如果目标是聊天输出速度，当前 CPU 仍可能更好。
+
+#### 7.5.6 OpenCL ngl sweep 脚本
+
+仓库中新增了手机端脚本：
+
+```text
+scripts/run_opencl_ngl_sweep.sh
+```
+
+推到手机：
+
+```bash
+adb push scripts/run_opencl_ngl_sweep.sh /data/local/tmp/llama-opencl/
+adb shell chmod +x /data/local/tmp/llama-opencl/run_opencl_ngl_sweep.sh
+```
+
+运行：
+
+```bash
+adb shell
+cd /data/local/tmp/llama-opencl
+./run_opencl_ngl_sweep.sh
+```
+
+默认测试：
+
+```text
+models:
+- qwen2.5-3b-instruct-q4_0.gguf
+- qwen2.5-3b-instruct-q6_k.gguf
+- qwen2.5-3b-instruct-q8_0.gguf
+
+ngl:
+- 0
+- 8
+- 16
+- 24
+- 32
+- 99
+```
+
+默认日志路径：
+
+```text
+/data/local/tmp/llama-opencl/opencl_ngl_sweep.log
+```
+
+每次运行脚本都会清空旧日志；如果日志不存在，会自动创建。
+
+拉回 Linux：
+
+```bash
+adb pull /data/local/tmp/llama-opencl/opencl_ngl_sweep.log ./opencl_ngl_sweep.log
+```
+
+只测试单个模型：
+
+```bash
+MODELS="qwen2.5-3b-instruct-q4_0.gguf" ./run_opencl_ngl_sweep.sh
+```
+
+自定义 `ngl`：
+
+```bash
+NGLS="0 16 32 99" ./run_opencl_ngl_sweep.sh
+```
+
 ## 8. 模型文件位置
 
 当前模型放在手机：

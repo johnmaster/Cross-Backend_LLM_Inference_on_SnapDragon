@@ -1,0 +1,303 @@
+=== OpenCL ngl sweep started ===
+time: Fri Jun 12 22:38:15 CST 2026
+bench: /data/local/tmp/llama-opencl/llama-bench
+model_dir: /sdcard/Download/models
+log: /data/local/tmp/llama-opencl/opencl_ngl_sweep.log
+prompt tokens: 512
+generation tokens: 128
+threads: 4
+ngl list: 0 8 16 24 32 99
+selected models: qwen2.5-3b-instruct-q4_0.gguf qwen2.5-3b-instruct-q6_k.gguf qwen2.5-3b-instruct-q8_0.gguf
+opencl library path: /vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl
+
+=== [1/18] MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 0 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf -p 512 -n 128 -t 4 -ngl 0
+start time: Fri Jun 12 22:38:15 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |   0 |       4 |           pp512 |         13.17 ± 0.42 |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |   0 |       4 |           tg128 |          8.57 ± 1.08 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 22:43:24 CST 2026
+=== [1/18] done: MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 0 ===
+
+=== [2/18] MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 8 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf -p 512 -n 128 -t 4 -ngl 8
+start time: Fri Jun 12 22:43:24 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |   8 |       4 |           pp512 |         12.72 ± 0.39 |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |   8 |       4 |           tg128 |          8.92 ± 0.04 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 22:49:05 CST 2026
+=== [2/18] done: MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 8 ===
+
+=== [3/18] MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 16 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf -p 512 -n 128 -t 4 -ngl 16
+start time: Fri Jun 12 22:49:05 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  16 |       4 |           pp512 |         16.50 ± 0.46 |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  16 |       4 |           tg128 |          9.62 ± 0.42 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 22:53:48 CST 2026
+=== [3/18] done: MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 16 ===
+
+=== [4/18] MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 24 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf -p 512 -n 128 -t 4 -ngl 24
+start time: Fri Jun 12 22:53:48 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  24 |       4 |           pp512 |         25.75 ± 2.29 |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  24 |       4 |           tg128 |         10.12 ± 1.83 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 22:57:24 CST 2026
+=== [4/18] done: MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 24 ===
+
+=== [5/18] MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 32 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf -p 512 -n 128 -t 4 -ngl 32
+start time: Fri Jun 12 22:57:24 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  32 |       4 |           pp512 |         42.44 ± 0.12 |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  32 |       4 |           tg128 |          9.85 ± 0.40 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:00:12 CST 2026
+=== [5/18] done: MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 32 ===
+
+=== [6/18] MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 99 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q4_0.gguf -p 512 -n 128 -t 4 -ngl 99
+start time: Fri Jun 12 23:00:12 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  99 |       4 |           pp512 |        116.45 ± 0.26 |
+| qwen2 3B Q4_0                  |   1.86 GiB |     3.40 B | OpenCL     |  99 |       4 |           tg128 |         14.05 ± 2.66 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:01:58 CST 2026
+=== [6/18] done: MODEL: qwen2.5-3b-instruct-q4_0.gguf NGL: 99 ===
+
+=== [7/18] MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 0 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q6_k.gguf -p 512 -n 128 -t 4 -ngl 0
+start time: Fri Jun 12 23:01:58 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |   0 |       4 |           pp512 |          9.26 ± 0.64 |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |   0 |       4 |           tg128 |          7.50 ± 0.50 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:08:59 CST 2026
+=== [7/18] done: MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 0 ===
+
+=== [8/18] MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 8 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q6_k.gguf -p 512 -n 128 -t 4 -ngl 8
+start time: Fri Jun 12 23:08:59 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |   8 |       4 |           pp512 |          9.28 ± 0.62 |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |   8 |       4 |           tg128 |          6.27 ± 0.19 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:16:31 CST 2026
+=== [8/18] done: MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 8 ===
+
+=== [9/18] MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 16 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q6_k.gguf -p 512 -n 128 -t 4 -ngl 16
+start time: Fri Jun 12 23:16:31 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  16 |       4 |           pp512 |         11.87 ± 0.45 |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  16 |       4 |           tg128 |          6.68 ± 0.01 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:22:57 CST 2026
+=== [9/18] done: MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 16 ===
+
+=== [10/18] MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 24 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q6_k.gguf -p 512 -n 128 -t 4 -ngl 24
+start time: Fri Jun 12 23:22:57 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  24 |       4 |           pp512 |         16.28 ± 0.15 |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  24 |       4 |           tg128 |          7.38 ± 0.19 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:28:08 CST 2026
+=== [10/18] done: MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 24 ===
+
+=== [11/18] MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 32 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q6_k.gguf -p 512 -n 128 -t 4 -ngl 32
+start time: Fri Jun 12 23:28:08 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  32 |       4 |           pp512 |         28.01 ± 0.01 |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  32 |       4 |           tg128 |          6.73 ± 0.06 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:32:13 CST 2026
+=== [11/18] done: MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 32 ===
+
+=== [12/18] MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 99 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q6_k.gguf -p 512 -n 128 -t 4 -ngl 99
+start time: Fri Jun 12 23:32:13 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  99 |       4 |           pp512 |         51.57 ± 0.04 |
+| qwen2 3B Q6_K                  |   2.60 GiB |     3.40 B | OpenCL     |  99 |       4 |           tg128 |          7.27 ± 0.09 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:35:22 CST 2026
+=== [12/18] done: MODEL: qwen2.5-3b-instruct-q6_k.gguf NGL: 99 ===
+
+=== [13/18] MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 0 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q8_0.gguf -p 512 -n 128 -t 4 -ngl 0
+start time: Fri Jun 12 23:35:22 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |   0 |       4 |           pp512 |         11.18 ± 0.01 |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |   0 |       4 |           tg128 |          8.59 ± 0.12 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:41:13 CST 2026
+=== [13/18] done: MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 0 ===
+
+=== [14/18] MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 8 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q8_0.gguf -p 512 -n 128 -t 4 -ngl 8
+start time: Fri Jun 12 23:41:13 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |   8 |       4 |           pp512 |         13.59 ± 0.56 |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |   8 |       4 |           tg128 |          8.61 ± 0.40 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:46:43 CST 2026
+=== [14/18] done: MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 8 ===
+
+=== [15/18] MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 16 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q8_0.gguf -p 512 -n 128 -t 4 -ngl 16
+start time: Fri Jun 12 23:46:43 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  16 |       4 |           pp512 |         17.93 ± 0.73 |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  16 |       4 |           tg128 |          8.15 ± 0.26 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:51:25 CST 2026
+=== [15/18] done: MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 16 ===
+
+=== [16/18] MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 24 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q8_0.gguf -p 512 -n 128 -t 4 -ngl 24
+start time: Fri Jun 12 23:51:25 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  24 |       4 |           pp512 |         23.60 ± 0.70 |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  24 |       4 |           tg128 |          8.76 ± 0.10 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:55:23 CST 2026
+=== [16/18] done: MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 24 ===
+
+=== [17/18] MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 32 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q8_0.gguf -p 512 -n 128 -t 4 -ngl 32
+start time: Fri Jun 12 23:55:23 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  32 |       4 |           pp512 |         38.99 ± 0.73 |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  32 |       4 |           tg128 |          8.68 ± 0.03 |
+
+build: f7ca93d12 (9612)
+end time: Fri Jun 12 23:58:34 CST 2026
+=== [17/18] done: MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 32 ===
+
+=== [18/18] MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 99 ===
+CMD: LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64:/system/lib64:/data/local/tmp/llama-opencl:$LD_LIBRARY_PATH /data/local/tmp/llama-opencl/llama-bench -m /sdcard/Download/models/qwen2.5-3b-instruct-q8_0.gguf -p 512 -n 128 -t 4 -ngl 99
+start time: Fri Jun 12 23:58:34 CST 2026
+ggml_opencl: selected platform: 'QUALCOMM Snapdragon(TM)'
+
+ggml_opencl: device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+ggml_opencl: default device: 'QUALCOMM Adreno(TM) 750 (OpenCL 3.0 Adreno(TM) 750)'
+| model                          |       size |     params | backend    | ngl | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | --------------: | -------------------: |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  99 |       4 |           pp512 |         65.06 ± 0.07 |
+| qwen2 3B Q8_0                  |   3.36 GiB |     3.40 B | OpenCL     |  99 |       4 |           tg128 |          9.06 ± 0.09 |
+
+build: f7ca93d12 (9612)
+end time: Sat Jun 13 00:01:12 CST 2026
+=== [18/18] done: MODEL: qwen2.5-3b-instruct-q8_0.gguf NGL: 99 ===
+
+=== all completed ===
+time: Sat Jun 13 00:01:12 CST 2026
+log saved to: /data/local/tmp/llama-opencl/opencl_ngl_sweep.log
