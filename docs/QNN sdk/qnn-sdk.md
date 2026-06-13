@@ -448,3 +448,294 @@ free graph/context handles
 free backend/device/profile handles
 exit process
 ```
+
+## 13. Genie + BGE embedding 跑通记录
+
+在 MobileNet V2 QNN HTP 跑通后，继续验证 Genie runtime。最初尝试直接进入 LLM，但遇到两个现实问题：
+
+1. Llama 3.2 1B 需要访问 Hugging Face gated repo，需要登录并接受 Meta license。
+2. 本机内存和 swap 对 LLM export 不够友好，`qai-hub-models` 提示推荐约 50 GB RAM + swap。
+
+因此先改为跑更轻量的 Genie embedding 示例：`BAAI/bge-large-en-v1.5`。它不是聊天 LLM，而是文本 embedding 模型，但可以验证 Genie 工具、tokenizer、模型资产、GenAITransformer backend 和手机端执行链路。
+
+### 13.1 Genie 工具验证
+
+手机端已经推送并验证：
+
+```text
+/data/local/tmp/qnn/bin/genie-t2t-run
+/data/local/tmp/qnn/bin/genie-t2e-run
+/data/local/tmp/qnn/bin/genie-app
+```
+
+相关库：
+
+```text
+/data/local/tmp/qnn/lib/libGenie.so
+/data/local/tmp/qnn/lib/libQnnGenAiTransformer.so
+/data/local/tmp/qnn/lib/libQnnGenAiTransformerModel.so
+```
+
+执行：
+
+```sh
+cd /data/local/tmp/qnn
+export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
+export ADSP_LIBRARY_PATH="$PWD/dsp;$PWD/lib;/vendor/dsp/cdsp;/vendor/lib/rfsa/adsp;/system/lib/rfsa/adsp;/dsp"
+
+./bin/genie-t2t-run --help
+./bin/genie-app --help
+```
+
+`genie-t2t-run` 的最小形式是：
+
+```sh
+./bin/genie-t2t-run --config <dialog.json> --prompt "Hello"
+```
+
+BGE 是 embedding 模型，使用的是：
+
+```sh
+./bin/genie-t2e-run -c <embedding_config.json> -p "text"
+```
+
+### 13.2 大 LLM 暂停原因
+
+尝试导出 `llama_v3_2_1b_instruct`：
+
+```bash
+python -m qai_hub_models.models.llama_v3_2_1b_instruct.export \
+  --target-runtime genie \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --context-lengths 512 \
+  --sequence-lengths 128,1 \
+  --output-dir /home/lingbok/export_assets/llama-v3_2-1b-s24-genie-c512
+```
+
+遇到 Hugging Face gated repo 权限问题：
+
+```text
+Cannot access gated repo
+meta-llama/Llama-3.2-1B-Instruct is restricted
+You must have access to it and be authenticated
+```
+
+同时导出前提示内存不足：
+
+```text
+Recommended memory (RAM + swap): 50 GB
+Recommended swap space: 20 GB
+```
+
+当前决定：先不继续硬做 Llama / Qwen，先跑通更小的 Genie embedding 链路。
+
+### 13.3 下载 BGE 模型
+
+电脑端在 `qai_hub` 环境中下载：
+
+```bash
+conda activate qai_hub
+mkdir -p /home/lingbok/models
+
+huggingface-cli download BAAI/bge-large-en-v1.5 \
+  --local-dir /home/lingbok/models/bge-large-en-v1.5
+```
+
+下载后确认文件：
+
+```bash
+ls /home/lingbok/models/bge-large-en-v1.5 | grep -Ei "config|tokenizer|model|safetensors"
+```
+
+已确认存在：
+
+```text
+config.json
+config_sentence_transformers.json
+model.safetensors
+pytorch_model.bin
+sentence_bert_config.json
+tokenizer_config.json
+tokenizer.json
+```
+
+安装 Hugging Face 工具时曾经误升级到 `huggingface_hub 1.19.0`，导致和当前环境冲突：
+
+```text
+qai-hub-models requires huggingface_hub<=0.36.2
+tokenizers requires huggingface-hub<1.0
+transformers requires huggingface-hub<1.0
+```
+
+修正：
+
+```bash
+pip install "huggingface_hub==0.36.2"
+```
+
+确认：
+
+```text
+huggingface_hub: 0.36.2
+transformers: 4.51.0
+```
+
+### 13.4 qnn-genai-transformer-composer 转换
+
+SDK 文档给出的 BGE GenAITransformer 流程是：
+
+```bash
+qnn-genai-transformer-composer \
+  --outfile <output>.bin \
+  --model <path-to-downloaded-BGE-model-directory>
+```
+
+第一次运行时遇到：
+
+```text
+ModuleNotFoundError: No module named 'qti'
+```
+
+原因：没有设置 SDK Python 路径。
+
+之后又遇到：
+
+```text
+TypeError: unsupported operand type(s) for +: 'NoneType' and 'str'
+```
+
+原因：`qnn-genai-transformer-composer` 读取的是 `QNN_SDK_ROOT`，只设置 `QAIRT_SDK_ROOT` 不够。
+
+正确环境：
+
+```bash
+export QAIRT_SDK_ROOT=$HOME/Qualcomm/qairt/2.47.0.260601
+export QNN_SDK_ROOT=$QAIRT_SDK_ROOT
+export PYTHONPATH=$QNN_SDK_ROOT/lib/python:$PYTHONPATH
+export PATH=$QNN_SDK_ROOT/bin/x86_64-linux-clang:$PATH
+export LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/x86_64-linux-clang:$LD_LIBRARY_PATH
+```
+
+也可以直接使用：
+
+```bash
+source $HOME/Qualcomm/qairt/2.47.0.260601/bin/envsetup.sh
+```
+
+转换命令：
+
+```bash
+mkdir -p /home/lingbok/export_assets/bge-large-genie
+
+cd $QNN_SDK_ROOT/bin/x86_64-linux-clang
+
+./qnn-genai-transformer-composer \
+  --outfile /home/lingbok/export_assets/bge-large-genie/model.bin \
+  --model /home/lingbok/models/bge-large-en-v1.5
+```
+
+成功输出：
+
+```text
+[ 388 / 388] Writing tensor blk.9.ffn_down.weight | size 1024 x 4096 | type F32
+Wrote /home/lingbok/export_assets/bge-large-genie/model.bin
+Time 1.6490 s
+```
+
+### 13.5 修改 BGE Genie config
+
+复制 SDK 示例配置：
+
+```bash
+cp $QNN_SDK_ROOT/examples/Genie/configs/bge/bge-large-genaitransformer.json \
+  /home/lingbok/export_assets/bge-large-genie/
+```
+
+原始配置中有占位路径：
+
+```text
+"path" : "your/path/to/tokenizer_file.json"
+"model-bin" : "your/path/to/model/file.bin"
+```
+
+修改为当前目录相对路径：
+
+```bash
+sed -i \
+  -e 's#"your/path/to/tokenizer_file.json"#"tokenizer.json"#' \
+  -e 's#"your/path/to/model/file.bin"#"model.bin"#' \
+  /home/lingbok/export_assets/bge-large-genie/bge-large-genaitransformer.json
+```
+
+### 13.6 推送到手机
+
+```bash
+adb shell "mkdir -p /data/local/tmp/qnn/genie/bge-large"
+
+adb push /home/lingbok/export_assets/bge-large-genie/bge-large-genaitransformer.json \
+  /data/local/tmp/qnn/genie/bge-large/
+
+adb push /home/lingbok/models/bge-large-en-v1.5/tokenizer.json \
+  /data/local/tmp/qnn/genie/bge-large/
+
+adb push /home/lingbok/export_assets/bge-large-genie/model.bin \
+  /data/local/tmp/qnn/genie/bge-large/
+```
+
+### 13.7 手机端运行 BGE embedding
+
+手机端：
+
+```sh
+cd /data/local/tmp/qnn
+export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
+export PATH=$PWD/bin:$PATH
+
+cd /data/local/tmp/qnn/genie/bge-large
+
+../../bin/genie-t2e-run \
+  -c bge-large-genaitransformer.json \
+  -p "Tell me about Qualcomm"
+```
+
+成功输出：
+
+```text
+Using libGenie.so version 1.18.0
+
+[PROMPT]: Tell me about Qualcomm
+
+RANK of DIMENSIONS : 2
+
+EMBEDDING DIMENSIONS : [ 9, 1024 ]
+
+GENERATED EMBEDDING SIZE : 9216
+Embedding vectors saved in output.raw
+Embedding Dimension saved in embeddingInfo.json
+```
+
+含义：
+
+```text
+输入 prompt 被 tokenizer 切成 9 个 token
+每个 token 生成 1024 维 embedding
+输出 shape 是 [9, 1024]
+总元素数是 9 * 1024 = 9216
+```
+
+输出文件：
+
+```text
+/data/local/tmp/qnn/genie/bge-large/output.raw
+/data/local/tmp/qnn/genie/bge-large/embeddingInfo.json
+```
+
+当前结论：
+
+```text
+Genie runtime 已经能在 OnePlus 12 本地执行 BGE embedding。
+已经跑通 Hugging Face 模型 -> composer 转 model.bin -> tokenizer/config 推送 -> genie-t2e-run -> output.raw 的完整链路。
+```
+
+BGE 不是聊天模型，不会输出自然语言回答。它输出向量，适合后续做语义检索、RAG、文本相似度和向量数据库实验。
