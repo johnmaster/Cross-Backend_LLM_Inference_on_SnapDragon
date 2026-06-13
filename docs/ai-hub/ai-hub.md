@@ -449,3 +449,815 @@ curl -I https://tetrahub-qprod-userdata.s3-accelerate.amazonaws.com
 4. 重新运行同一条 export 命令。该问题可能只是临时网络抖动，重跑后可以成功。
 
 本次实际情况：第一次上传超时失败，第二次重跑后成功完成 upload、compile、profile、inference 和 download。
+
+## 11. 常用 AI Hub 命令速查
+
+这一节把两个常用入口分开记录：
+
+```text
+qai-hub        AI Hub 服务端交互 CLI：配置 token、列设备、上传模型、提交 compile/profile/link job
+qai-hub-models 官方模型包辅助 CLI：查看/获取 qai-hub-models 版本资产；具体模型通常用 python -m ...export 运行
+```
+
+### 环境和版本
+
+确认当前 Python 环境中安装的版本：
+
+```bash
+pip show qai-hub | grep Version
+pip show qai-hub-models | grep Version
+```
+
+也可以用 Python 读取 package metadata：
+
+```bash
+python - <<'PY'
+import importlib.metadata as m
+
+for pkg in ["qai-hub", "qai-hub-models", "huggingface-hub", "transformers"]:
+    try:
+        print(pkg, m.version(pkg))
+    except m.PackageNotFoundError:
+        print(pkg, "not installed")
+PY
+```
+
+查看 PyPI 上 `qai-hub-models` 可用版本：
+
+```bash
+pip index versions qai-hub-models -i https://pypi.org/simple
+```
+
+如果当前 pip 源是 HTTP 镜像，可能会出现：
+
+```text
+The repository located at mirrors.cloud.aliyuncs.com is not a trusted or secure host
+ERROR: No matching distribution found for qai-hub-models
+```
+
+这不是包不存在，而是 pip 源或 trusted-host 配置问题。临时指定官方 PyPI 即可。
+
+### `qai-hub` 常用命令
+
+查看主帮助：
+
+```bash
+qai-hub --help
+```
+
+当前 `qai-hub` CLI 常见子命令：
+
+| 命令 | 作用 |
+| --- | --- |
+| `qai-hub configure` | 配置 AI Hub token |
+| `qai-hub list-devices` | 查看 hosted devices |
+| `qai-hub list-frameworks` | 查看支持的框架/runtime |
+| `qai-hub upload-model` | 上传本地模型到 AI Hub |
+| `qai-hub submit-compile-job` | 提交单独 compile job |
+| `qai-hub submit-profile-job` | 提交单独 profile job |
+| `qai-hub submit-compile-and-profile-jobs` | 一次提交 compile + profile |
+| `qai-hub submit-link-job` | 提交 link job，常用于多个 QNN DLC / LLM 分片链接 |
+
+配置 token：
+
+```bash
+qai-hub configure --api_token <YOUR_TOKEN>
+```
+
+如果要使用另一个 profile：
+
+```bash
+qai-hub configure --profile test --api_token <YOUR_TOKEN>
+qai-hub --profile test list-devices
+```
+
+查看 hosted devices：
+
+```bash
+qai-hub list-devices
+```
+
+查看某个设备的详细信息：
+
+```bash
+qai-hub list-devices --format details --device "Samsung Galaxy S24 (Family)" --device-os 14
+```
+
+筛选 Snapdragon 8 Gen 3 / Samsung S24：
+
+```bash
+qai-hub list-devices | grep -Ei "8 gen 3|8gen3|sm8650|Samsung Galaxy S24"
+```
+
+当前用于近似 OnePlus 12 的推荐设备参数：
+
+```bash
+--device "Samsung Galaxy S24 (Family)" --device-os 14
+```
+
+查看支持框架/runtime：
+
+```bash
+qai-hub list-frameworks
+qai-hub list-frameworks --json
+```
+
+上传模型：
+
+```bash
+qai-hub upload-model --model resnet50.pt
+qai-hub upload-model --model resnet50.pt --name resnet50_test
+```
+
+提交 compile job：
+
+```bash
+qai-hub submit-compile-job \
+  --model resnet50.pt \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --input_specs '{"x": (1, 3, 224, 224)}' \
+  --wait
+```
+
+指定 compile options，例如 target runtime：
+
+```bash
+qai-hub submit-compile-job \
+  --model resnet50.pt \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --compile_options " --target_runtime tflite" \
+  --wait
+```
+
+提交 profile job：
+
+```bash
+qai-hub submit-profile-job \
+  --model resnet50.tflite \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --wait
+```
+
+指定 compute unit：
+
+```bash
+qai-hub submit-profile-job \
+  --model resnet50.tflite \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --profile_options " --compute_unit cpu" \
+  --wait
+```
+
+一次提交 compile + profile：
+
+```bash
+qai-hub submit-compile-and-profile-jobs \
+  --model resnet50.pt \
+  --input_specs '{"x": (1, 3, 224, 224)}' \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --wait
+```
+
+基于已有 job 重新提交：
+
+```bash
+qai-hub submit-compile-job --clone <JOB_ID>
+qai-hub submit-profile-job --clone <JOB_ID>
+qai-hub submit-compile-and-profile-jobs --clone <JOB_ID>
+```
+
+提交 link job：
+
+```bash
+qai-hub submit-link-job \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --models <MODEL_ID_1> <MODEL_ID_2> \
+  --wait
+```
+
+说明：
+
+- `qai-hub` 更偏底层，可以手动上传模型、提交 job。
+- `python -m qai_hub_models.models.<model>.export` 更偏官方模型一键流程，会自动完成上传、compile、profile、download 等步骤。
+- 对新手来说，先用 `qai-hub-models` 的 `export.py` 跑通官方模型，再逐步学习 `qai-hub submit-*` 更稳。
+
+### `qai-hub-models` 常用命令
+
+查看帮助：
+
+```bash
+qai-hub-models --help
+```
+
+当前常见子命令：
+
+| 命令 | 作用 |
+| --- | --- |
+| `qai-hub-models fetch` | 获取官方模型相关静态资产 |
+| `qai-hub-models versions` | 查看 `qai-hub-models` 版本信息 |
+
+注意：`qai-hub-models` 没有 `list` 子命令。下面这个命令会报错：
+
+```bash
+qai-hub-models list
+```
+
+报错类似：
+
+```text
+qai_hub_models: error: argument {fetch,versions}: invalid choice: 'list' (choose from 'fetch', 'versions')
+```
+
+查看版本相关信息：
+
+```bash
+qai-hub-models versions
+```
+
+查看 fetch 用法：
+
+```bash
+qai-hub-models fetch --help
+```
+
+`qai-hub-models` 的模型运行通常不是通过 CLI 子命令，而是通过 Python module：
+
+```bash
+python -m qai_hub_models.models.mobilenet_v2.demo
+python -m qai_hub_models.models.mobilenet_v2.export --help
+python -m qai_hub_models.models.mobilenet_v2.export \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --target-runtime tflite \
+  --precision float \
+  --output-dir ~/export_assets/mobilenet_v2-s24-tflite-float
+```
+
+LLM / Genie 模型也是类似：
+
+```bash
+python -m qai_hub_models.models.qwen3_4b_instruct_2507.export --help
+```
+
+实际导出：
+
+```bash
+HF_ENDPOINT=https://hf-mirror.com PYTHONUNBUFFERED=1 python -u -m qai_hub_models.models.qwen3_4b_instruct_2507.export \
+  --target-runtime genie \
+  --checkpoint DEFAULT_W4A16 \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --context-length 512 \
+  --sequence-length 128,1 \
+  --skip-profiling \
+  --skip-inferencing \
+  --synchronous \
+  --model-cache-mode enable \
+  --output-dir ~/export_assets/qwen3_4b_instruct_2507-s24-genie-c512
+```
+
+### 查看 `qai-hub-models` 支持哪些模型
+
+列出本地 `qai_hub_models.models` 包中的所有模型模块：
+
+```bash
+python - <<'PY'
+import pkgutil
+import qai_hub_models.models as models
+
+for m in sorted(pkgutil.iter_modules(models.__path__), key=lambda x: x.name):
+    if m.ispkg:
+        print(m.name)
+PY
+```
+
+筛选 LLM / Qwen / Llama / Gemma / Phi 等模型：
+
+```bash
+python - <<'PY'
+import pkgutil
+import qai_hub_models.models as models
+
+keywords = ["qwen", "llama", "gemma", "phi", "mistral", "bert", "bge"]
+for m in sorted(pkgutil.iter_modules(models.__path__), key=lambda x: x.name):
+    name = m.name.lower()
+    if any(k in name for k in keywords):
+        print(m.name)
+PY
+```
+
+当前 `qai-hub-models 0.55.0` 中能看到的 Qwen 模块包括：
+
+```text
+qwen2_5_7b_instruct
+qwen2_5_vl_7b_instruct
+qwen2_7b_instruct
+qwen3_4b
+qwen3_4b_instruct_2507
+```
+
+注意：这里没有 `qwen2_5_3b_instruct`，所以不能直接用官方 `qai-hub-models` export 路线复现之前 llama.cpp 中的 Qwen2.5-3B GGUF 实验。
+
+### 查看某个模型支持什么参数
+
+对目标模型运行 `export --help`：
+
+```bash
+python -m qai_hub_models.models.mobilenet_v2.export --help
+python -m qai_hub_models.models.qwen3_4b_instruct_2507.export --help
+```
+
+`--help` 能正常输出只说明模块存在、参数解析正常；真正能否导出，还要看该模型是否有可用 checkpoint、static assets，以及包内 `info.yaml` 是否正常。
+
+查看每个模型目录中是否包含 `export.py`、`demo.py`、`requirements.txt`、`info.yaml`：
+
+```bash
+python - <<'PY'
+import pathlib
+import qai_hub_models.models as models
+
+root = pathlib.Path(models.__path__[0])
+for d in sorted(root.iterdir()):
+    if not d.is_dir() or d.name.startswith("_"):
+        continue
+    files = {p.name for p in d.iterdir() if p.is_file()}
+    caps = []
+    if "export.py" in files:
+        caps.append("export")
+    if "demo.py" in files:
+        caps.append("demo")
+    if "requirements.txt" in files:
+        caps.append("requirements")
+    if "info.yaml" in files:
+        caps.append("info")
+    if caps:
+        print(f"{d.name}: {', '.join(caps)}")
+PY
+```
+
+### 安装某个模型的额外依赖
+
+有些 LLM 模型需要额外依赖，例如 `transformers`、`accelerate`、`safetensors`。先找到 requirements 文件：
+
+```bash
+find "$(python - <<'PY'
+import pathlib
+import qai_hub_models.models as models
+print(pathlib.Path(models.__path__[0]) / "qwen3_4b_instruct_2507")
+PY
+)" -maxdepth 2 -type f -iname "*requirements*.txt" -print
+```
+
+安装：
+
+```bash
+pip install -r /path/to/requirements.txt
+```
+
+检查关键依赖：
+
+```bash
+python - <<'PY'
+import transformers
+import accelerate
+import safetensors
+
+print("transformers", transformers.__version__)
+print("accelerate", accelerate.__version__)
+print("deps ok")
+PY
+```
+
+如果安装 Hugging Face CLI 时把 `huggingface_hub` 升到 `1.x`，可能和 `qai-hub-models 0.55.0`、`transformers 4.51.0`、`tokenizers` 冲突。当前更稳的版本是：
+
+```bash
+pip install "huggingface_hub==0.36.2"
+```
+
+### Hugging Face 下载和镜像
+
+国内服务器访问 Hugging Face 官方站点可能失败：
+
+```text
+Network is unreachable
+HTTPSConnectionPool(host='huggingface.co', port=443)
+```
+
+可以临时使用镜像：
+
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+```
+
+验证：
+
+```bash
+HF_ENDPOINT=https://hf-mirror.com python - <<'PY'
+from huggingface_hub import hf_hub_download
+p = hf_hub_download("Qwen/Qwen3-4B-Instruct-2507", "config.json")
+print(p)
+PY
+```
+
+如果同时设置了代理，先检查：
+
+```bash
+env | grep -Ei "proxy|http_proxy|https_proxy"
+```
+
+不需要代理时清掉：
+
+```bash
+unset ALL_PROXY HTTPS_PROXY HTTP_PROXY all_proxy https_proxy http_proxy
+```
+
+### 运行 Qwen3-4B Instruct 2507 Genie 导出
+
+当前推荐先跑官方支持的 Qwen3-4B Instruct 2507，而不是手动处理 Qwen2.5-3B：
+
+```bash
+HF_ENDPOINT=https://hf-mirror.com PYTHONUNBUFFERED=1 python -u -m qai_hub_models.models.qwen3_4b_instruct_2507.export \
+  --target-runtime genie \
+  --checkpoint DEFAULT_W4A16 \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --context-length 512 \
+  --sequence-length 128,1 \
+  --skip-profiling \
+  --skip-inferencing \
+  --synchronous \
+  --model-cache-mode enable \
+  --output-dir ~/export_assets/qwen3_4b_instruct_2507-s24-genie-c512
+```
+
+建议先用较小的 context：
+
+```text
+context-length: 512
+sequence-length: 128,1
+```
+
+这样可以降低导出和编译成本，适合先跑通端到端流程。
+
+### 观察长时间运行的 export
+
+查看进程：
+
+```bash
+ps -eo pid,%cpu,%mem,etime,cmd | grep qwen3_4b_instruct_2507 | grep -v grep
+```
+
+查看缓存和输出目录大小：
+
+```bash
+du -sh ~/.cache/huggingface ~/.qaihm ~/export_assets/qwen3_4b_instruct_2507-s24-genie-c512 2>/dev/null
+```
+
+查看网络连接：
+
+```bash
+ss -tpn | grep -E "python|443|amazonaws|qualcomm|aihub"
+```
+
+组合观察：
+
+```bash
+watch -n 20 'date; ps -eo pid,%cpu,%mem,etime,cmd | grep qwen3_4b_instruct_2507 | grep -v grep; du -sh ~/.qaihm ~/export_assets/qwen3_4b_instruct_2507-s24-genie-c512 2>/dev/null; ss -tpn | grep -E "python|443|amazonaws|qualcomm|aihub" || true'
+```
+
+如果进程 CPU 仍有占用、`ss` 中还有 established 连接，就不要轻易中断。
+
+### `info.yaml` release assets 校验问题
+
+`qai-hub-models 0.55.0` 中，`qwen3_4b` 和 `qwen3_4b_instruct_2507` 曾遇到：
+
+```text
+pydantic_core._pydantic_core.ValidationError
+Value error, Model cannot be published: no release assets available
+```
+
+实际现象：
+
+- Hugging Face 权重和 tokenizer 已经下载成功。
+- 报错发生在 `QAIHMModelInfo.from_model(model_id).name`。
+- 该代码只是为了获取模型显示名，却触发了包内 `info.yaml` 的 release assets 校验。
+
+确认当前 PyPI 最新版：
+
+```bash
+pip index versions qai-hub-models -i https://pypi.org/simple
+```
+
+当前记录：
+
+```text
+INSTALLED: 0.55.0
+LATEST:    0.55.0
+```
+
+临时绕过方式是在虚拟环境中 patch 这一行：
+
+```bash
+python - <<'PY'
+import pathlib
+import qai_hub_models.models._shared.llm.export as e
+
+p = pathlib.Path(e.__file__)
+print("file:", p)
+
+text = p.read_text()
+old = "model_display_name = QAIHMModelInfo.from_model(model_id).name"
+new = 'model_display_name = model_id  # patched: bypass broken release-assets validation'
+
+if old not in text:
+    print("target line not found")
+else:
+    backup = p.with_suffix(p.suffix + ".bak")
+    backup.write_text(text)
+    p.write_text(text.replace(old, new, 1))
+    print("patched")
+    print("backup:", backup)
+PY
+```
+
+说明：
+
+- 这是临时 workaround，不是长期方案。
+- 只修改当前 venv 中的 site-packages，不修改仓库代码。
+- patch 后 export 可以继续进入 static assets 下载和 AI Hub 编译流程。
+- 如果后续 Qualcomm 发布新版 `qai-hub-models` 修复该问题，应优先升级官方版本。
+
+## 12. 租服务器尝试 Genie LLM 的记录和结论
+
+本节记录一次在云服务器上尝试通过 `qai-hub-models` 导出 Genie LLM 的过程。结论是：当前网络和模型授权条件下，不适合继续烧服务器时间硬跑。
+
+### 初始目标
+
+原始目标是跑通 Genie + LLM，并尽量选择 Qwen 系列，方便和之前在手机上用 llama.cpp 跑的 Qwen2.5-3B CPU / OpenCL / Vulkan 结果做对比。
+
+本地和服务器上 `qai-hub-models 0.55.0` 能看到的 Qwen 模块为：
+
+```text
+qwen2_5_7b_instruct
+qwen2_5_vl_7b_instruct
+qwen2_7b_instruct
+qwen3_4b
+qwen3_4b_instruct_2507
+```
+
+没有官方 `qwen2_5_3b_instruct` 模块，因此不能直接用 AI Hub 官方模型路线复现 Qwen2.5-3B。
+
+### 服务器环境
+
+服务器中确认：
+
+```bash
+pip index versions qai-hub-models -i https://pypi.org/simple
+```
+
+结果：
+
+```text
+INSTALLED: 0.55.0
+LATEST:    0.55.0
+```
+
+说明当时已经是 PyPI 最新公开版，不能通过普通升级解决问题。
+
+`qwen3_4b` 和 `qwen3_4b_instruct_2507` 都需要额外依赖，例如：
+
+```text
+transformers
+accelerate
+safetensors
+```
+
+曾遇到：
+
+```text
+ModuleNotFoundError: No module named 'transformers'
+ModuleNotFoundError: No module named 'accelerate'
+```
+
+安装对应 requirements 后解决。
+
+### `qwen3_4b` / `qwen3_4b_instruct_2507` 的 metadata 校验问题
+
+`qwen3_4b` 导出时，模型权重还没有真正开始编译，就先失败在：
+
+```text
+Value error, Model cannot be published: no release assets available
+```
+
+`qwen3_4b_instruct_2507` 也遇到同类问题。报错位置为：
+
+```text
+QAIHMModelInfo.from_model(model_id).name
+```
+
+该代码只是为了取得显示名，却触发了包内 `info.yaml` 的 release assets 校验。临时 patch 后可以绕过：
+
+```python
+model_display_name = model_id
+```
+
+patch 后，`qwen3_4b_instruct_2507` 继续进入后续流程，开始下载 Qualcomm 预制 W4A16 static asset。
+
+### Qwen3-4B Instruct 2507 的瓶颈
+
+`qwen3_4b_instruct_2507` 的 Hugging Face 权重和 tokenizer 可以下载完成：
+
+```text
+model-00001-of-00003.safetensors 3.96G
+model-00002-of-00003.safetensors 3.99G
+model-00003-of-00003.safetensors 99.6M
+Loading checkpoint shards: 100%
+```
+
+但后续需要下载 Qualcomm S3 上的 static asset：
+
+```text
+https://qaihub-public-assets.s3.us-west-2.amazonaws.com/qai-hub-models/models/qwen3_4b_instruct_2507/v1/qwen34instruct2507_w4a16_adascale.zip
+```
+
+该文件体积约十几个 GB。服务器到 Qualcomm S3 的下载速度非常慢，曾观察到十几分钟只增长到几 MB：
+
+```text
+/root/.qaihm 2.5M
+elapsed 13:42
+```
+
+因此继续下载不划算。
+
+### 美国服务器 SOCKS5 代理尝试
+
+尝试使用美国小服务器作为 SOCKS5 代理，只让阿里云服务器通过它访问外部资源：
+
+```bash
+ssh -N -D 127.0.0.1:10809 root@<US_SERVER_IP>
+```
+
+如果端口被占用：
+
+```text
+bind [127.0.0.1]:10808: Address already in use
+```
+
+可以换端口，例如 `10809`。
+
+设置代理：
+
+```bash
+export ALL_PROXY=socks5h://127.0.0.1:10809
+export HTTPS_PROXY=socks5h://127.0.0.1:10809
+export HTTP_PROXY=socks5h://127.0.0.1:10809
+```
+
+测试：
+
+```bash
+curl --socks5-hostname 127.0.0.1:10809 -I https://qaihub-public-assets.s3.us-west-2.amazonaws.com
+```
+
+这个方法可以解决“是否能连通”的问题，但对于十几个 GB 的 Qwen static asset，实际下载速度仍然不适合作为按小时计费服务器上的主路线。
+
+### Llama 3.2 1B 尝试
+
+为了避免 Qwen3-4B 的十几个 GB static asset，尝试了较小的官方 LLM：
+
+```text
+llama_v3_2_1b_instruct
+```
+
+导出命令使用的参数名和 Qwen 不同：
+
+```bash
+python -m qai_hub_models.models.llama_v3_2_1b_instruct.export \
+  --target-runtime genie \
+  --device "Samsung Galaxy S24 (Family)" \
+  --device-os 14 \
+  --context-lengths 512 \
+  --sequence-lengths 128,1 \
+  --skip-profiling \
+  --skip-inferencing \
+  --skip-downloading \
+  --output-dir ~/export_assets/llama-v3_2-1b-s24-genie-c512
+```
+
+注意：
+
+```text
+Qwen:  --context-length / --sequence-length
+Llama: --context-lengths / --sequence-lengths
+```
+
+Llama 1B 需要下载 Qualcomm S3 的 `model.encodings`，但更关键的问题是它还需要访问 Hugging Face 上的 Meta gated repo：
+
+```text
+meta-llama/Llama-3.2-1B-Instruct
+```
+
+通过 SOCKS5 代理后网络可达，但报错变为权限问题：
+
+```text
+Cannot access gated repo
+Access to model meta-llama/Llama-3.2-1B-Instruct is restricted.
+401 Client Error
+```
+
+这说明网络已经通了，但 Hugging Face 账号没有该 Llama 模型的授权，或者服务器上没有用已授权账号登录。
+
+需要在 Hugging Face 模型页申请/同意 Meta Llama license 后，再使用：
+
+```bash
+huggingface-cli login
+```
+
+或：
+
+```bash
+export HF_TOKEN=<YOUR_HF_TOKEN>
+```
+
+但本次没有继续推进，因为服务器已经按成本考虑关停。
+
+### 关于 `HF_ENDPOINT`
+
+曾尝试：
+
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+```
+
+这只影响 Hugging Face 下载，不影响 Qualcomm S3：
+
+```text
+qaihub-public-assets.s3.us-west-2.amazonaws.com
+```
+
+因此：
+
+- `HF_ENDPOINT` 可以帮助下载 Hugging Face 模型配置和权重。
+- 它不能加速 Qualcomm AI Hub static assets。
+- 如果走官方 Hugging Face + 美国 SOCKS5，应取消 `HF_ENDPOINT`：
+
+```bash
+unset HF_ENDPOINT
+export ALL_PROXY=socks5h://127.0.0.1:10809
+export HTTPS_PROXY=socks5h://127.0.0.1:10809
+export HTTP_PROXY=socks5h://127.0.0.1:10809
+```
+
+### 本次止损结论
+
+本次 Genie LLM 路线没有继续的原因不是单一错误，而是多个现实条件叠加：
+
+1. 官方 `qai-hub-models` 没有 Qwen2.5-3B 模块，无法直接和之前 GGUF 实验完全对齐。
+2. `qwen3_4b` / `qwen3_4b_instruct_2507` 在 `qai-hub-models 0.55.0` 中有 `info.yaml` release assets 校验问题，需要临时 patch。
+3. Qwen3-4B Instruct 2507 的 Qualcomm W4A16 static asset 约十几个 GB，服务器下载速度过慢。
+4. Llama 3.2 1B 更小，但 Hugging Face 模型是 gated repo，需要 Meta 授权和已登录 token。
+5. 按小时计费服务器不适合在外部下载链路不确定时长时间空跑。
+
+最终选择关停服务器止损是合理的。
+
+### 后续更稳的路线
+
+建议后续分两条线推进：
+
+1. 本地继续 QNN SDK / Genie 小模型路线：
+
+```text
+MobileNet V2 QNN context -> qnn-net-run -> qnn-throughput-net-run -> 自己写 QNN runner
+BGE Genie embedding -> 继续熟悉 Genie config / tokenizer / model.bin
+```
+
+这条路线不依赖大模型下载，也不需要高配云服务器。
+
+2. LLM Genie 等网络和授权准备好后再做：
+
+```text
+确认 Hugging Face token 和 gated model 授权
+确认 Qualcomm S3 下载速度可接受
+优先选择 1B 级别官方模型跑通
+再回到 Qwen / 3B / 4B 模型
+```
+
+下一次租服务器前，建议先做三项预检查：
+
+```bash
+qai-hub list-devices | grep -i "Samsung Galaxy S24"
+python -m qai_hub_models.models.llama_v3_2_1b_instruct.export --help
+python - <<'PY'
+from transformers import AutoConfig
+cfg = AutoConfig.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
+print(cfg.model_type)
+PY
+```
+
+如果第三条因为 gated repo 失败，先不要租高配服务器，应该先处理 Hugging Face 授权。
