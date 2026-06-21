@@ -30,7 +30,7 @@ QHPI API + scalar MatMul + HVX worker scheduling
 
 ```text
 qnn_custom_ops/matmul_qhpi_hvx/
-qnn_custom_ops/matmul_qhpi_hmx/
+qnn_custom_ops/matmul_qhpi_fp16_scalar/
 ```
 
 ## 2. QHPI 与 Legacy Op Package 的区别
