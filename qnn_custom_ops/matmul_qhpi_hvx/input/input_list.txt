@@ -1,0 +1,1 @@
+lhs:=/data/local/tmp/qnn/custom_matmul_qhpi_hvx/input/lhs.raw rhs:=/data/local/tmp/qnn/custom_matmul_qhpi_hvx/input/rhs.raw
