@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<OpDefCollection
+        PackageName="MatMulQhpiHvx8RowBothPrepackFp32StoreOpPackage"
+        Domain="aisw"
+        Version="1.0"
+        UseQHPI="true">
+
+    <OpDefList>
+        <OpDef>
+            <Name>MatMulQhpiHvx8RowBothPrepackFp32Store</Name>
+
+            <Description>
+                <Content>
+                    FP16-input batched matrix multiplication with FP32 output:
+                    output[B,H,M,N] =
+                    lhs[B,H,M,K] * rhs[B,H,K,N].
+                    Broadcasting and transpose are not supported.
+                </Content>
+            </Description>
+
+            <Input>
+                <Name>lhs</Name>
+                <Description>
+                    <Content>Left matrix with shape [B,H,M,K].</Content>
+                </Description>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, head, rows, reduction]</Text>
+                </Shape>
+            </Input>
+
+            <Input>
+                <Name>rhs</Name>
+                <Description>
+                    <Content>Right matrix with shape [B,H,K,N].</Content>
+                </Description>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, head, reduction, columns]</Text>
+                </Shape>
+            </Input>
+
+            <Output>
+                <Name>output</Name>
+                <Description>
+                    <Content>Matrix product with shape [B,H,M,N].</Content>
+                </Description>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, head, rows, columns]</Text>
+                </Shape>
+            </Output>
+
+            <SupportedBackend>HTP</SupportedBackend>
+        </OpDef>
+        <OpDef>
+            <Name>MatMulQhpiHvxPackLhs</Name>
+            <Description>
+                <Content>Converts an FP16 LHS tensor to raw Q13 bits.</Content>
+            </Description>
+            <Input>
+                <Name>lhs</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape><Rank>4D</Rank><Text>[batch, head, rows, reduction]</Text></Shape>
+            </Input>
+            <Output>
+                <Name>lhs_q13_bits</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape><Rank>4D</Rank><Text>[batch, head, rows, reduction]</Text></Shape>
+            </Output>
+            <SupportedBackend>HTP</SupportedBackend>
+        </OpDef>
+        <OpDef>
+            <Name>MatMulQhpiHvxPackRhs</Name>
+            <Description>
+                <Content>Converts an FP16 RHS tensor to raw Q13 bits.</Content>
+            </Description>
+            <Input>
+                <Name>rhs</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape><Rank>4D</Rank><Text>[batch, head, reduction, columns]</Text></Shape>
+            </Input>
+            <Output>
+                <Name>rhs_q13_bits</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape><Rank>4D</Rank><Text>[batch, head, reduction, columns]</Text></Shape>
+            </Output>
+            <SupportedBackend>HTP</SupportedBackend>
+        </OpDef>
+    </OpDefList>
+
+    <SupplementalOpDefList Backend="HTP">
+        <SupportedOps>
+            <OpName>MatMulQhpiHvx8RowBothPrepackFp32Store</OpName>
+            <OpName>MatMulQhpiHvxPackLhs</OpName>
+            <OpName>MatMulQhpiHvxPackRhs</OpName>
+        </SupportedOps>
+
+        <SupplementalOpDef>
+            <Name>MatMulQhpiHvx8RowBothPrepackFp32Store</Name>
+
+            <Input>
+                <Name>lhs</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Input>
+
+            <Input>
+                <Name>rhs</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Input>
+
+            <Output>
+                <Name>output</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_32</Datatype>
+            </Output>
+        </SupplementalOpDef>
+        <SupplementalOpDef>
+            <Name>MatMulQhpiHvxPackLhs</Name>
+            <Input>
+                <Name>lhs</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Input>
+            <Output>
+                <Name>lhs_q13_bits</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Output>
+        </SupplementalOpDef>
+        <SupplementalOpDef>
+            <Name>MatMulQhpiHvxPackRhs</Name>
+            <Input>
+                <Name>rhs</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Input>
+            <Output>
+                <Name>rhs_q13_bits</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Output>
+        </SupplementalOpDef>
+    </SupplementalOpDefList>
+
+</OpDefCollection>
