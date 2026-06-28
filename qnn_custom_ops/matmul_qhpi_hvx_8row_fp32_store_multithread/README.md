@@ -21,6 +21,48 @@ qhpi_slice_number(handle)
 
 取得 slice 总数和当前编号。
 
+这里不需要在 kernel 中使用 `pthread_create`、OpenMP 或手动创建线程。
+`.multithreaded = true` 会启用 QHPI self-slicing：QNN/QHPI runtime
+负责选择可用的 HVX worker，并让多个 worker 并行进入同一个 `Execute()`
+函数。运行 `qnn-net-run` 时也不需要额外添加“线程数”参数。
+
+`num_slices` 不是本算子设置的固定线程数，而是当前执行时由 runtime
+通过 `qhpi_num_slices(handle)` 提供；每个 worker 再通过
+`qhpi_slice_number(handle)` 获得自己的 `slice` 编号。kernel 使用这两个
+值划分工作：
+
+```cpp
+const uint32_t num_slices = qhpi_num_slices(handle);
+const uint32_t slice = qhpi_slice_number(handle);
+
+for (uint32_t row = slice * 8;
+     row < full_rows;
+     row += num_slices * 8) {
+    // 当前 worker 只计算分配给自己的 8-row tile
+}
+```
+
+因此，“使用 multithread”包含两部分：
+
+1. 注册阶段设置 `.multithreaded = true`，允许 runtime 多 worker 调度。
+2. `Execute()` 阶段按照 `slice` 和 `num_slices` 切分输出行，避免不同
+   worker 重复计算或写入同一位置。
+
+如果只有一个 worker，runtime 会提供单 slice，循环仍能正常覆盖所有
+输出行；如果存在多个 slice，同一套代码会自动并行执行。实际 slice
+数量由 runtime 和设备资源决定，本算子没有把它固定为某个数值。
+
+kernel 先计算能够被 8-row tile 完整覆盖的行数：
+
+```cpp
+full_rows = m - (m % 8);
+```
+
+这里的 `full_rows` 是将 `m` 向下取整到 8 的倍数，它由 8-row kernel
+的 tile 高度决定，与线程数 `num_slices` 无关。例如 `m=130` 时，
+`full_rows=128`：第 0～127 行由 16 个 8-row tile 处理，第 128～129
+行进入单行 tail 路径。
+
 `M=128` 被划分为 16 个 8-row tile。slice `s` 处理：
 
 ```text
