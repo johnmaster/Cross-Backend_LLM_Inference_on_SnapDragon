@@ -1,0 +1,1 @@
+lhs:=qnn_quantized_matmul/input/lhs_uint8.raw

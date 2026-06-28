@@ -1,0 +1,1 @@
+/home/lingbok/Cross-Backend_LLM_Inference_on_SnapDragon/qnn_quantization/06_onnx_qdq_matmul/input/lhs_float.raw

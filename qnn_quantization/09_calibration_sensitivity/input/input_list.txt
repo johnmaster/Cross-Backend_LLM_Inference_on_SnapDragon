@@ -1,0 +1,1 @@
+lhs:=qnn_calibration/input/lhs_float.raw

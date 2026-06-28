@@ -1,0 +1,1 @@
+/home/lingbok/Cross-Backend_LLM_Inference_on_SnapDragon/qnn_quantization/09_calibration_sensitivity/calibration/outlier/lhs_float.raw

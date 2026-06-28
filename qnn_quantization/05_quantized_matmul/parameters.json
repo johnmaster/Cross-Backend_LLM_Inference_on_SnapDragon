@@ -1,0 +1,9 @@
+{
+  "lhs_scale": 0.003936838211975698,
+  "rhs_per_tensor_scale": 0.003925009036627341,
+  "rhs_per_axis_scale_min": 0.00015748031728435308,
+  "rhs_per_axis_scale_max": 0.003937007859349251,
+  "output_scale": 0.03250987135519193,
+  "offset": -128,
+  "weight_axis": 3
+}

@@ -1,0 +1,1 @@
+lhs:=qnn_qdq_matmul/input/lhs_float.raw

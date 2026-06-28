@@ -1,0 +1,2539 @@
+{
+	"model.cpp": "/home/lingbok/Cross-Backend_LLM_Inference_on_SnapDragon/qnn_quantization/06_onnx_qdq_matmul/generated/int8_per_axis_calibrated.cpp",
+	"model.bin": "/home/lingbok/Cross-Backend_LLM_Inference_on_SnapDragon/qnn_quantization/06_onnx_qdq_matmul/generated/int8_per_axis_calibrated.bin",
+	"converter_command": "qnn-onnx-converter; act_bitwidth=8; act_quantizer=tf; act_quantizer_calibration=min-max; act_quantizer_schema=asymmetric; adjust_nms_features_dims=True; algorithms=[]; align_matmul_ranks=True; apply_masked_softmax=uncompressed; arch_checker=False; backend=None; batch=None; bias_bitwidth=8; calc_static_encodings=False; converter_op_package_lib=; copyright_file=None; custom_io=; custom_op_config_paths=None; debug=None; defer_loading=False; define_symbol=None; disable_batchnorm_folding=False; disable_defer_loading=False; disable_node_validation=False; disable_qnn_op_config_validation=False; disable_relu_squashing=False; dry_run=None; dumpIR=False; dump_custom_io_config_template=; dump_encoding_json=False; dump_inferred_model=False; dump_ir=; dump_ir_optimizer_config_template=False; dump_optimization_pass_mode_config=False; dump_pass_trace_info=False; dump_qairt_io_config_yaml=; dump_qairt_quantizer_command=None; dump_value_info=False; enable_framework_trace=False; enable_match_gathernd=False; enable_match_topk=False; enable_per_row_quantized_bias=False; exclude_named_tensors=False; expand_gru_op_structure=True; expand_lstm_op_structure=False; expand_sparse_op_structure=False; export_format=cpp; extract_color_transform=True; float_bias_bitwidth=0; float_bias_bw=0; float_bitwidth=32; float_bw=32; float_fallback=False; force_prune_cast_ops=False; handle_gather_negative_indices=True; ignore_encodings=False; include_data_invariant_ops=False; inject_cast_for_gather=True; input_dim=None; input_dtype=[]; input_encoding=[]; input_layout=[]; input_list=qnn_quantization/06_onnx_qdq_matmul/input/converter_input_list.txt; input_type=[]; ir_optimizer_config=; keep_disconnected_nodes=False; keep_int64_inputs=False; keep_quant_nodes=False; keep_weights_quantized=False; match_caffe_ssd_to_tf=True; model_version=None; multi_time_steps_gru=False; multi_time_steps_lstm=False; no_simplification=False; op_package_lib=; optimization_pass_mode=ir_optimizer_mainline; optimization_pass_mode_config=; out_names=['output']; overwrite_model_prefix=False; pack_4_bit_weights=False; package_name=None; packed_masked_softmax_inputs=[]; packed_max_seq=1; param_quantizer=None; param_quantizer_calibration=min-max; param_quantizer_schema=symmetric; percentile_calibration_value=99.99; perform_axes_to_spatial_first_order=True; perform_layout_transformation=False; prepare_inputs_as_params=False; preprocess_roi_pool_inputs=True; preserve_io=[]; preserve_onnx_output_order=False; quantization_overrides=qnn_quantization/06_onnx_qdq_matmul/model/quantization_overrides.json; quantizer_log=None; quantizer_log_level=LogLevel.NONE; restrict_quantization_steps=[]; squash_box_decoder=True; unroll_gru_time_steps=True; unroll_lstm_time_steps=True; use_aimet_quantizer=False; use_convert_quantization_nodes=False; use_dynamic_16_bit_weights=False; use_native_dtype=False; use_native_input_files=False; use_native_output_files=False; use_per_channel_quantization=False; use_per_row_quantization=False; use_quantize_v2=False; validate_models=False; weights_bitwidth=8",
+	"copyright_str": "",
+	"op_types": [
+		"MatMul",
+		"Transpose"
+	],
+	"graph": {
+		"tensors": {
+			"lhs": {
+				"id": 1,
+				"type": 0,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					3,
+					1,
+					2
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.5019363760948181,
+						"maximum": 0.49801498651504519,
+						"scale": 0.0039213779382407669,
+						"offset": -128,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					128,
+					256,
+					1
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"output": {
+				"id": 5,
+				"type": 1,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1,
+					2,
+					3
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -3.911214590072632,
+						"maximum": 4.132009029388428,
+						"scale": 0.03154205158352852,
+						"offset": -124,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					1,
+					128,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"lhs_nchw": {
+				"id": 3,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.5019363760948181,
+						"maximum": 0.49801498651504519,
+						"scale": 0.0039213779382407669,
+						"offset": -128,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					1,
+					128,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"rhs_nchw": {
+				"id": 1,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 776,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 1,
+					"is_overridden": true,
+					"axis_scale_offset": {
+						"axis": 3,
+						"num_scale_offsets": 256,
+						"scale_offsets": [
+							{
+								"bitwidth": 8,
+								"minimum": -0.019999999552965165,
+								"maximum": 0.019999999552965165,
+								"scale": 0.00015748031728435308,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.020254060626029969,
+								"maximum": 0.020254060626029969,
+								"scale": 0.00015948079817462713,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02051134966313839,
+								"maximum": 0.02051134966313839,
+								"scale": 0.0001615066867088899,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.020771905779838563,
+								"maximum": 0.020771905779838563,
+								"scale": 0.00016355831758119166,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.021035771816968919,
+								"maximum": 0.021035771816968919,
+								"scale": 0.0001656359963817522,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02130299061536789,
+								"maximum": 0.02130299061536789,
+								"scale": 0.0001677400869084522,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02157360315322876,
+								"maximum": 0.02157360315322876,
+								"scale": 0.00016987089475151151,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02184765413403511,
+								"maximum": 0.02184765413403511,
+								"scale": 0.00017202876915689558,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.022125186398625375,
+								"maximum": 0.022125186398625375,
+								"scale": 0.00017421405937056988,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.022406242787837983,
+								"maximum": 0.022406242787837983,
+								"scale": 0.00017642711463849992,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.022690871730446817,
+								"maximum": 0.022690871730446817,
+								"scale": 0.00017866828420665115,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.022979114204645158,
+								"maximum": 0.022979114204645158,
+								"scale": 0.00018093790276907384,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.023271018639206888,
+								"maximum": 0.023271018639206888,
+								"scale": 0.00018323636322747916,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.023566631600260736,
+								"maximum": 0.023566631600260736,
+								"scale": 0.0001855640293797478,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.023865999653935434,
+								"maximum": 0.023865999653935434,
+								"scale": 0.00018792125047184527,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02416917122900486,
+								"maximum": 0.02416917122900486,
+								"scale": 0.00019030843395739794,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.024476192891597749,
+								"maximum": 0.024476192891597749,
+								"scale": 0.0001927259290823713,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.024787114933133127,
+								"maximum": 0.024787114933133127,
+								"scale": 0.0001951741287484765,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02510198764503002,
+								"maximum": 0.02510198764503002,
+								"scale": 0.00019765344040933996,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.025420859456062318,
+								"maximum": 0.025420859456062318,
+								"scale": 0.0002001642424147576,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02574378252029419,
+								"maximum": 0.02574378252029419,
+								"scale": 0.00020270694221835583,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02607080712914467,
+								"maximum": 0.02607080712914467,
+								"scale": 0.00020528194727376103,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.026401985436677934,
+								"maximum": 0.026401985436677934,
+								"scale": 0.00020788965048268437,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02673737145960331,
+								"maximum": 0.02673737145960331,
+								"scale": 0.0002105304884025827,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.027077017351984979,
+								"maximum": 0.027077017351984979,
+								"scale": 0.0002132048539351672,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.027420977130532266,
+								"maximum": 0.027420977130532266,
+								"scale": 0.00021591321274172515,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.027769308537244798,
+								"maximum": 0.027769308537244798,
+								"scale": 0.00021865597227588296,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.028122061863541604,
+								"maximum": 0.028122061863541604,
+								"scale": 0.00022143355454318225,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02847929857671261,
+								"maximum": 0.02847929857671261,
+								"scale": 0.00022424643975682557,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.02884107269346714,
+								"maximum": 0.02884107269346714,
+								"scale": 0.00022709506447426975,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.029207441955804826,
+								"maximum": 0.029207441955804826,
+								"scale": 0.00022997985070105642,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.029578465968370439,
+								"maximum": 0.029578465968370439,
+								"scale": 0.00023290130775421858,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.029954202473163606,
+								"maximum": 0.029954202473163606,
+								"scale": 0.00023585985763929784,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03033471293747425,
+								"maximum": 0.03033471293747425,
+								"scale": 0.0002388560096733272,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.030720055103302003,
+								"maximum": 0.030720055103302003,
+								"scale": 0.00024189020041376352,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03111029416322708,
+								"maximum": 0.03111029416322708,
+								"scale": 0.000244962953729555,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.031505487859249118,
+								"maximum": 0.031505487859249118,
+								"scale": 0.0002480747061781585,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.031905706971883777,
+								"maximum": 0.031905706971883777,
+								"scale": 0.0002512260398361832,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.032311003655195239,
+								"maximum": 0.032311003655195239,
+								"scale": 0.0002544173621572554,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03272145241498947,
+								"maximum": 0.03272145241498947,
+								"scale": 0.00025764922611415386,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03313711658120155,
+								"maximum": 0.03313711658120155,
+								"scale": 0.0002609221846796572,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.033558059483766559,
+								"maximum": 0.033558059483766559,
+								"scale": 0.00026423667441122234,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03398434817790985,
+								"maximum": 0.03398434817790985,
+								"scale": 0.0002675933064892888,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03441605344414711,
+								"maximum": 0.03441605344414711,
+								"scale": 0.00027099254657514393,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.034853242337703708,
+								"maximum": 0.034853242337703708,
+								"scale": 0.00027443497674539685,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.035295985639095309,
+								"maximum": 0.035295985639095309,
+								"scale": 0.00027792114997282624,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03574435040354729,
+								"maximum": 0.03574435040354729,
+								"scale": 0.0002814515901263803,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.036198411136865619,
+								"maximum": 0.036198411136865619,
+								"scale": 0.0002850268501788378,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03665824234485626,
+								"maximum": 0.03665824234485626,
+								"scale": 0.00028864757041446865,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.0371239148080349,
+								"maximum": 0.0371239148080349,
+								"scale": 0.0002923143038060516,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03759550303220749,
+								"maximum": 0.03759550303220749,
+								"scale": 0.0002960275742225349,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03807307779788971,
+								"maximum": 0.03807307779788971,
+								"scale": 0.00029978802194818854,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03855672478675842,
+								"maximum": 0.03855672478675842,
+								"scale": 0.00030359625816345215,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.039046511054039,
+								"maximum": 0.039046511054039,
+								"scale": 0.0003074528358411044,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.03954252228140831,
+								"maximum": 0.03954252228140831,
+								"scale": 0.0003113584534730762,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04004483297467232,
+								"maximum": 0.04004483297467232,
+								"scale": 0.0003153136349283159,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04055352136492729,
+								"maximum": 0.04055352136492729,
+								"scale": 0.0003193190786987543,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.041068676859140399,
+								"maximum": 0.041068676859140399,
+								"scale": 0.0003233753959648311,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.0415903739631176,
+								"maximum": 0.0415903739631176,
+								"scale": 0.0003274832561146468,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04211869835853577,
+								"maximum": 0.04211869835853577,
+								"scale": 0.0003316432994324714,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04265373572707176,
+								"maximum": 0.04265373572707176,
+								"scale": 0.0003358561953064054,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04319556802511215,
+								"maximum": 0.04319556802511215,
+								"scale": 0.00034012258402071893,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.0437442809343338,
+								"maximum": 0.0437442809343338,
+								"scale": 0.0003444431640673429,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04429996758699417,
+								"maximum": 0.04429996758699417,
+								"scale": 0.0003488186339382082,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.044862713664770129,
+								"maximum": 0.044862713664770129,
+								"scale": 0.0003532497212290764,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04543260484933853,
+								"maximum": 0.04543260484933853,
+								"scale": 0.00035773703712038696,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04600973799824715,
+								"maximum": 0.04600973799824715,
+								"scale": 0.00036228139651939273,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.046594202518463138,
+								"maximum": 0.046594202518463138,
+								"scale": 0.00036688349791802466,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04718609154224396,
+								"maximum": 0.04718609154224396,
+								"scale": 0.0003715440398082137,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.047785498201847079,
+								"maximum": 0.047785498201847079,
+								"scale": 0.00037626377888955176,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04839251935482025,
+								"maximum": 0.04839251935482025,
+								"scale": 0.0003810434718616307,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04900725185871124,
+								"maximum": 0.04900725185871124,
+								"scale": 0.00038588387542404234,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.04962979257106781,
+								"maximum": 0.04962979257106781,
+								"scale": 0.0003907857753802091,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05026024207472801,
+								"maximum": 0.05026024207472801,
+								"scale": 0.0003957499284297228,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05089870095252991,
+								"maximum": 0.05089870095252991,
+								"scale": 0.0004007771785836667,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.051545269787311557,
+								"maximum": 0.051545269787311557,
+								"scale": 0.0004058682534378022,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05220005288720131,
+								"maximum": 0.05220005288720131,
+								"scale": 0.00041102402610704303,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05286315083503723,
+								"maximum": 0.05286315083503723,
+								"scale": 0.0004162452823948115,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.053534675389528278,
+								"maximum": 0.053534675389528278,
+								"scale": 0.0004215328663121909,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.054214730858802798,
+								"maximum": 0.054214730858802798,
+								"scale": 0.00042688765097409487,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05490342155098915,
+								"maximum": 0.05490342155098915,
+								"scale": 0.0004323103930801153,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.055600862950086597,
+								"maximum": 0.055600862950086597,
+								"scale": 0.00043780208216048777,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05630716308951378,
+								"maximum": 0.05630716308951378,
+								"scale": 0.0004433634749148041,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05702243372797966,
+								"maximum": 0.05702243372797966,
+								"scale": 0.0004489955317694694,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05774679407477379,
+								"maximum": 0.05774679407477379,
+								"scale": 0.00045469915494322777,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05848035588860512,
+								"maximum": 0.05848035588860512,
+								"scale": 0.0004604752466548234,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.0592232346534729,
+								"maximum": 0.0592232346534729,
+								"scale": 0.00046632468001917005,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.05997554957866669,
+								"maximum": 0.05997554957866669,
+								"scale": 0.0004722484154626727,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06073741987347603,
+								"maximum": 0.06073741987347603,
+								"scale": 0.0004782474134117365,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06150897219777107,
+								"maximum": 0.06150897219777107,
+								"scale": 0.000484322605188936,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06229032203555107,
+								"maximum": 0.06229032203555107,
+								"scale": 0.0004904749803245068,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06308159977197647,
+								"maximum": 0.06308159977197647,
+								"scale": 0.0004967055283486843,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06388293206691742,
+								"maximum": 0.06388293206691742,
+								"scale": 0.0005030152387917042,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06469443440437317,
+								"maximum": 0.06469443440437317,
+								"scale": 0.0005094049847684801,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06551625579595566,
+								"maximum": 0.06551625579595566,
+								"scale": 0.0005158760468475521,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06634850800037384,
+								"maximum": 0.06634850800037384,
+								"scale": 0.000522429181728512,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06719134002923966,
+								"maximum": 0.06719134002923966,
+								"scale": 0.0005290656699799001,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06804487109184265,
+								"maximum": 0.06804487109184265,
+								"scale": 0.00053578638471663,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06890925019979477,
+								"maximum": 0.06890925019979477,
+								"scale": 0.0005425925482995808,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.06978461146354675,
+								"maximum": 0.06978461146354675,
+								"scale": 0.0005494851502589881,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07067108899354935,
+								"maximum": 0.07067108899354935,
+								"scale": 0.0005564652965404093,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07156882435083389,
+								"maximum": 0.07156882435083389,
+								"scale": 0.0005635340348817408,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07247796654701233,
+								"maximum": 0.07247796654701233,
+								"scale": 0.0005706926458515227,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.073398657143116,
+								"maximum": 0.073398657143116,
+								"scale": 0.0005779421771876514,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07433104515075684,
+								"maximum": 0.07433104515075684,
+								"scale": 0.0005852837930433452,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07527527213096619,
+								"maximum": 0.07527527213096619,
+								"scale": 0.0005927186575718224,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07623150199651718,
+								"maximum": 0.07623150199651718,
+								"scale": 0.0006002480513416231,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07719987630844116,
+								"maximum": 0.07719987630844116,
+								"scale": 0.0006078730220906436,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07818054407835007,
+								"maximum": 0.07818054407835007,
+								"scale": 0.0006155948503874242,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.07917367666959763,
+								"maximum": 0.07917367666959763,
+								"scale": 0.000623414758592844,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08017942309379578,
+								"maximum": 0.08017942309379578,
+								"scale": 0.0006313340272754431,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08119794726371765,
+								"maximum": 0.08119794726371765,
+								"scale": 0.0006393539370037615,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08222941309213638,
+								"maximum": 0.08222941309213638,
+								"scale": 0.0006474757101386786,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.0832739770412445,
+								"maximum": 0.0832739770412445,
+								"scale": 0.0006557006272487342,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08433181047439575,
+								"maximum": 0.08433181047439575,
+								"scale": 0.0006640300271101296,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08540307730436325,
+								"maximum": 0.08540307730436325,
+								"scale": 0.0006724651902914047,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08648795634508133,
+								"maximum": 0.08648795634508133,
+								"scale": 0.0006810075137764216,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08758661895990372,
+								"maximum": 0.08758661895990372,
+								"scale": 0.000689658394549042,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08869923651218414,
+								"maximum": 0.08869923651218414,
+								"scale": 0.000698419171385467,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.08982598781585694,
+								"maximum": 0.08982598781585694,
+								"scale": 0.0007072912412695587,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09096705168485642,
+								"maximum": 0.09096705168485642,
+								"scale": 0.0007162760011851788,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09212260693311691,
+								"maximum": 0.09212260693311691,
+								"scale": 0.0007253748481161892,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09329284727573395,
+								"maximum": 0.09329284727573395,
+								"scale": 0.0007345893536694348,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09447795152664185,
+								"maximum": 0.09447795152664185,
+								"scale": 0.0007439208566211164,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09567811340093613,
+								"maximum": 0.09567811340093613,
+								"scale": 0.0007533709867857397,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09689351171255112,
+								"maximum": 0.09689351171255112,
+								"scale": 0.0007629410247318447,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09812435507774353,
+								"maximum": 0.09812435507774353,
+								"scale": 0.0007726327166892588,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.09937083721160889,
+								"maximum": 0.09937083721160889,
+								"scale": 0.000782447517849505,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.10063314437866211,
+								"maximum": 0.10063314437866211,
+								"scale": 0.0007923869416117668,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.10191149264574051,
+								"maximum": 0.10191149264574051,
+								"scale": 0.0008024526759982109,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1032060831785202,
+								"maximum": 0.1032060831785202,
+								"scale": 0.0008126463508233428,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.10451711714267731,
+								"maximum": 0.10451711714267731,
+								"scale": 0.0008229694212786853,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.10584480315446854,
+								"maximum": 0.10584480315446854,
+								"scale": 0.0008334236335940659,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1071893498301506,
+								"maximum": 0.1071893498301506,
+								"scale": 0.0008440106175839901,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.10855098068714142,
+								"maximum": 0.10855098068714142,
+								"scale": 0.0008547321194782853,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.10992991179227829,
+								"maximum": 0.10992991179227829,
+								"scale": 0.000865589885506779,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.11132635921239853,
+								"maximum": 0.11132635921239853,
+								"scale": 0.0008765854872763157,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.11274053901433945,
+								"maximum": 0.11274053901433945,
+								"scale": 0.0008877207874320447,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.11417268961668015,
+								"maximum": 0.11417268961668015,
+								"scale": 0.0008989975322037935,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.11562303453683853,
+								"maximum": 0.11562303453683853,
+								"scale": 0.0009104175842367113,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.11709179729223252,
+								"maximum": 0.11709179729223252,
+								"scale": 0.0009219826315529645,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.11857921630144119,
+								"maximum": 0.11857921630144119,
+								"scale": 0.0009336945950053632,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12008553743362427,
+								"maximum": 0.12008553743362427,
+								"scale": 0.0009455553954467177,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12161099165678024,
+								"maximum": 0.12161099165678024,
+								"scale": 0.0009575668373145163,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12315581738948822,
+								"maximum": 0.12315581738948822,
+								"scale": 0.0009697308414615691,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12472027540206909,
+								"maximum": 0.12472027540206909,
+								"scale": 0.000982049386948347,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12630459666252137,
+								"maximum": 0.12630459666252137,
+								"scale": 0.0009945243364199997,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12790904939174653,
+								"maximum": 0.12790904939174653,
+								"scale": 0.0010071578435599805,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.12953388690948487,
+								"maximum": 0.12953388690948487,
+								"scale": 0.0010199518874287606,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.13117936253547669,
+								"maximum": 0.13117936253547669,
+								"scale": 0.0010329083306714893,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.13284574449062348,
+								"maximum": 0.13284574449062348,
+								"scale": 0.001046029501594603,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.13453328609466554,
+								"maximum": 0.13453328609466554,
+								"scale": 0.0010593172628432513,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.13624227046966554,
+								"maximum": 0.13624227046966554,
+								"scale": 0.0010727738263085485,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.13797296583652497,
+								"maximum": 0.13797296583652497,
+								"scale": 0.0010864012874662877,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.13972564041614533,
+								"maximum": 0.13972564041614533,
+								"scale": 0.0011002018582075835,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1415005922317505,
+								"maximum": 0.1415005922317505,
+								"scale": 0.0011141778668388725,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.14329807460308076,
+								"maximum": 0.14329807460308076,
+								"scale": 0.0011283312924206257,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.14511840045452119,
+								"maximum": 0.14511840045452119,
+								"scale": 0.0011426645796746016,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.14696183800697328,
+								"maximum": 0.14696183800697328,
+								"scale": 0.001157179824076593,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.14882870018482209,
+								"maximum": 0.14882870018482209,
+								"scale": 0.00117187958676368,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1507192850112915,
+								"maximum": 0.1507192850112915,
+								"scale": 0.0011867660796269775,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.15263387560844422,
+								"maximum": 0.15263387560844422,
+								"scale": 0.0012018415145576,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.15457279980182649,
+								"maximum": 0.15457279980182649,
+								"scale": 0.0012171086855232716,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.15653634071350099,
+								"maximum": 0.15653634071350099,
+								"scale": 0.0012325695715844632,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.15852482616901399,
+								"maximum": 0.15852482616901399,
+								"scale": 0.0012482269667088986,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.16053858399391175,
+								"maximum": 0.16053858399391175,
+								"scale": 0.0012640833156183363,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.16257791221141816,
+								"maximum": 0.16257791221141816,
+								"scale": 0.0012801410630345345,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.16464313864707948,
+								"maximum": 0.16464313864707948,
+								"scale": 0.0012964026536792517,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.16673460602760316,
+								"maximum": 0.16673460602760316,
+								"scale": 0.0013128708815202118,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.16885265707969666,
+								"maximum": 0.16885265707969666,
+								"scale": 0.0013295484241098166,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.17099758982658387,
+								"maximum": 0.17099758982658387,
+								"scale": 0.0013464377261698247,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1731697916984558,
+								"maximum": 0.1731697916984558,
+								"scale": 0.0013635416980832816,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.17536957561969758,
+								"maximum": 0.17536957561969758,
+								"scale": 0.0013808627845719457,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1775972992181778,
+								"maximum": 0.1775972992181778,
+								"scale": 0.0013984038960188628,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.17985332012176515,
+								"maximum": 0.17985332012176515,
+								"scale": 0.0014161678263917566,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.18213801085948945,
+								"maximum": 0.18213801085948945,
+								"scale": 0.0014341576024889947,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.18445171415805818,
+								"maximum": 0.18445171415805818,
+								"scale": 0.0014523756690323353,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.18679481744766236,
+								"maximum": 0.18679481744766236,
+								"scale": 0.0014708252856507898,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.18916767835617066,
+								"maximum": 0.18916767835617066,
+								"scale": 0.0014895092463120819,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1915706843137741,
+								"maximum": 0.1915706843137741,
+								"scale": 0.001508430577814579,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.19400422275066377,
+								"maximum": 0.19400422275066377,
+								"scale": 0.0015275923069566489,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.19646866619586945,
+								"maximum": 0.19646866619586945,
+								"scale": 0.001546997344121337,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.1989644169807434,
+								"maximum": 0.1989644169807434,
+								"scale": 0.0015666489489376546,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.20149187743663789,
+								"maximum": 0.20149187743663789,
+								"scale": 0.0015865502646192909,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2040514349937439,
+								"maximum": 0.2040514349937439,
+								"scale": 0.0016067042015492917,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2066435068845749,
+								"maximum": 0.2066435068845749,
+								"scale": 0.0016271142521873117,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2092685103416443,
+								"maximum": 0.2092685103416443,
+								"scale": 0.0016477835597470403,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.21192686259746552,
+								"maximum": 0.21192686259746552,
+								"scale": 0.0016687155002728105,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.214618980884552,
+								"maximum": 0.214618980884552,
+								"scale": 0.0016899132169783116,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.21734529733657838,
+								"maximum": 0.21734529733657838,
+								"scale": 0.0017113803187385202,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.22010624408721925,
+								"maximum": 0.22010624408721925,
+								"scale": 0.0017331200651824475,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.22290225327014924,
+								"maximum": 0.22290225327014924,
+								"scale": 0.0017551358323544264,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.22573380172252656,
+								"maximum": 0.22573380172252656,
+								"scale": 0.0017774314619600773,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.22860130667686463,
+								"maximum": 0.22860130667686463,
+								"scale": 0.0018000103300437332,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.23150524497032166,
+								"maximum": 0.23150524497032166,
+								"scale": 0.0018228759290650488,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.23444606363773347,
+								"maximum": 0.23444606363773347,
+								"scale": 0.0018460319843143225,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.23742423951625825,
+								"maximum": 0.23742423951625825,
+								"scale": 0.001869482221081853,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2404402494430542,
+								"maximum": 0.2404402494430542,
+								"scale": 0.0018932303646579385,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.24349458515644074,
+								"maximum": 0.24349458515644074,
+								"scale": 0.0019172801403328777,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.24658770859241486,
+								"maximum": 0.24658770859241486,
+								"scale": 0.0019416355062276126,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.24972011148929597,
+								"maximum": 0.24972011148929597,
+								"scale": 0.0019663001876324417,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.25289231538772585,
+								"maximum": 0.25289231538772585,
+								"scale": 0.001991278026252985,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.25610482692718508,
+								"maximum": 0.25610482692718508,
+								"scale": 0.0020165734458714725,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.25935813784599306,
+								"maximum": 0.25935813784599306,
+								"scale": 0.002042190171778202,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.26265278458595278,
+								"maximum": 0.26265278458595278,
+								"scale": 0.002068132162094116,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2659892737865448,
+								"maximum": 0.2659892737865448,
+								"scale": 0.0020944038406014444,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.26936814188957217,
+								"maximum": 0.26936814188957217,
+								"scale": 0.0021210089325904848,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.27278995513916018,
+								"maximum": 0.27278995513916018,
+								"scale": 0.002147952327504754,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.27625522017478945,
+								"maximum": 0.27625522017478945,
+								"scale": 0.0021752379834651949,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2797645032405853,
+								"maximum": 0.2797645032405853,
+								"scale": 0.0022028700914233925,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.28331834077835085,
+								"maximum": 0.28331834077835085,
+								"scale": 0.0022308530751615764,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2869173586368561,
+								"maximum": 0.2869173586368561,
+								"scale": 0.0022591918241232635,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.29056209325790408,
+								"maximum": 0.29056209325790408,
+								"scale": 0.0022878905292600395,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.2942531108856201,
+								"maximum": 0.2942531108856201,
+								"scale": 0.0023169536143541338,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.297991007566452,
+								"maximum": 0.297991007566452,
+								"scale": 0.002346385968849063,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3017764091491699,
+								"maximum": 0.3017764091491699,
+								"scale": 0.0023761922493577005,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.30560991168022158,
+								"maximum": 0.30560991168022158,
+								"scale": 0.0024063773453235628,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3094920814037323,
+								"maximum": 0.3094920814037323,
+								"scale": 0.0024369454476982357,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3134235739707947,
+								"maximum": 0.3134235739707947,
+								"scale": 0.0024679021444171669,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.31740501523017886,
+								"maximum": 0.31740501523017886,
+								"scale": 0.0024992520920932295,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3214370012283325,
+								"maximum": 0.3214370012283325,
+								"scale": 0.0025309999473392965,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.32552024722099306,
+								"maximum": 0.32552024722099306,
+								"scale": 0.002563151530921459,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.32965534925460818,
+								"maximum": 0.32965534925460818,
+								"scale": 0.002595711499452591,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3338429629802704,
+								"maximum": 0.3338429629802704,
+								"scale": 0.0026286847423762085,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.33808380365371706,
+								"maximum": 0.33808380365371706,
+								"scale": 0.0026620770804584028,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.34237849712371828,
+								"maximum": 0.34237849712371828,
+								"scale": 0.0026958936359733345,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.34672772884368899,
+								"maximum": 0.34672772884368899,
+								"scale": 0.0027301395311951639,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.35113224387168887,
+								"maximum": 0.35113224387168887,
+								"scale": 0.002764820819720626,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3555926978588104,
+								"maximum": 0.3555926978588104,
+								"scale": 0.0027999423909932377,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.360109806060791,
+								"maximum": 0.360109806060791,
+								"scale": 0.0028355102986097337,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3646842837333679,
+								"maximum": 0.3646842837333679,
+								"scale": 0.002871529897674918,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3693169057369232,
+								"maximum": 0.3693169057369232,
+								"scale": 0.0029080072417855264,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3740083575248718,
+								"maximum": 0.3740083575248718,
+								"scale": 0.002944947686046362,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.37875938415527346,
+								"maximum": 0.37875938415527346,
+								"scale": 0.00298235728405416,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3835707902908325,
+								"maximum": 0.3835707902908325,
+								"scale": 0.003020242555066943,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.38844332098960879,
+								"maximum": 0.38844332098960879,
+								"scale": 0.003058608854189515,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.39337772130966189,
+								"maximum": 0.39337772130966189,
+								"scale": 0.0030974624678492548,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.3983748257160187,
+								"maximum": 0.3983748257160187,
+								"scale": 0.0031368096824735405,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4034354090690613,
+								"maximum": 0.4034354090690613,
+								"scale": 0.003176656784489751,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.40856024622917178,
+								"maximum": 0.40856024622917178,
+								"scale": 0.0032170098274946214,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.41375023126602175,
+								"maximum": 0.41375023126602175,
+								"scale": 0.003257875796407461,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4190061092376709,
+								"maximum": 0.4190061092376709,
+								"scale": 0.0032992607448250057,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4243287742137909,
+								"maximum": 0.4243287742137909,
+								"scale": 0.0033411714248359205,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4297190308570862,
+								"maximum": 0.4297190308570862,
+								"scale": 0.003383614355698228,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4351777732372284,
+								"maximum": 0.4351777732372284,
+								"scale": 0.0034265967551618816,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4407058656215668,
+								"maximum": 0.4407058656215668,
+								"scale": 0.0034701249096542598,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.44630417227745058,
+								"maximum": 0.44630417227745058,
+								"scale": 0.003514206036925316,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4519735872745514,
+								"maximum": 0.4519735872745514,
+								"scale": 0.0035588471218943598,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4577150344848633,
+								"maximum": 0.4577150344848633,
+								"scale": 0.003604055382311344,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.46352940797805788,
+								"maximum": 0.46352940797805788,
+								"scale": 0.003649837803095579,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.46941766142845156,
+								"maximum": 0.46941766142845156,
+								"scale": 0.003696202067658305,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.47538068890571597,
+								"maximum": 0.47538068890571597,
+								"scale": 0.003743154928088188,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.48141947388648989,
+								"maximum": 0.48141947388648989,
+								"scale": 0.003790704533457756,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4875349700450897,
+								"maximum": 0.4875349700450897,
+								"scale": 0.003838858101516962,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.4937281608581543,
+								"maximum": 0.4937281608581543,
+								"scale": 0.0038876233156770469,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							},
+							{
+								"bitwidth": 8,
+								"minimum": -0.5,
+								"maximum": 0.5,
+								"scale": 0.003937007859349251,
+								"offset": 0,
+								"is_symmetric": true,
+								"is_fixed_point": true
+							}
+						]
+					}
+				},
+				"dims": [
+					1,
+					1,
+					256,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "65536 (100.%)"
+			}
+		},
+		"nodes": {
+			"lhs_nchw": {
+				"package": "qti.aisw",
+				"type": "Transpose",
+				"tensor_params": {
+					"perm": {
+						"lhs_nchw_perm": {
+							"id": 2,
+							"type": 4,
+							"dataFormat": 0,
+							"data_type": 306,
+							"unquantized_data_type": 306,
+							"permute_order_to_src": [],
+							"quant_params": {
+								"definition": 2147483647,
+								"encoding": 2147483647,
+								"is_overridden": false,
+								"scale_offset": {
+									"bitwidth": 0,
+									"minimum": 0.0,
+									"maximum": 0.0,
+									"scale": 0.0,
+									"offset": 0,
+									"is_symmetric": false,
+									"is_fixed_point": true
+								}
+							},
+							"dims": [
+								4
+							],
+							"is_dynamic_dims": [],
+							"is_quantizable": false,
+							"is_updateable": false,
+							"data": [
+								0,
+								3,
+								1,
+								2
+							]
+						}
+					}
+				},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2,
+					"perm": 1
+				},
+				"input_names": [
+					"lhs"
+				],
+				"output_names": [
+					"lhs_nchw"
+				],
+				"macs_per_inference": "0"
+			},
+			"MatMul": {
+				"package": "qti.aisw",
+				"type": "MatMul",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					},
+					"transpose_in0": {
+						"1288": 0
+					},
+					"transpose_in1": {
+						"1288": 0
+					}
+				},
+				"param_map": {
+					"packageName": 2,
+					"transpose_in0": 1,
+					"transpose_in1": 1
+				},
+				"input_names": [
+					"lhs_nchw",
+					"rhs_nchw"
+				],
+				"output_names": [
+					"output"
+				],
+				"macs_per_inference": "0"
+			}
+		}
+	}
+}

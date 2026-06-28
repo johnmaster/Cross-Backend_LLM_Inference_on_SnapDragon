@@ -1,0 +1,1 @@
+weights:=qnn_int8_per_axis/input/weights_float.raw

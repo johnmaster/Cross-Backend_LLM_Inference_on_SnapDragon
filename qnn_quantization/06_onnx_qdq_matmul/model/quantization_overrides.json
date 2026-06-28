@@ -1,0 +1,1543 @@
+{
+  "activation_encodings": {},
+  "param_encodings": {
+    "rhs": [
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.019999999552965164,
+        "max": 0.019999999552965164
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.020254060626029968,
+        "max": 0.020254060626029968
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02051134966313839,
+        "max": 0.02051134966313839
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.020771905779838562,
+        "max": 0.020771905779838562
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.021035771816968918,
+        "max": 0.021035771816968918
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02130299061536789,
+        "max": 0.02130299061536789
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02157360315322876,
+        "max": 0.02157360315322876
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02184765413403511,
+        "max": 0.02184765413403511
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.022125186398625374,
+        "max": 0.022125186398625374
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.022406242787837982,
+        "max": 0.022406242787837982
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.022690871730446815,
+        "max": 0.022690871730446815
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.022979114204645157,
+        "max": 0.022979114204645157
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.023271018639206886,
+        "max": 0.023271018639206886
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.023566631600260735,
+        "max": 0.023566631600260735
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.023865999653935432,
+        "max": 0.023865999653935432
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02416917122900486,
+        "max": 0.02416917122900486
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.024476192891597748,
+        "max": 0.024476192891597748
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.024787114933133125,
+        "max": 0.024787114933133125
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02510198764503002,
+        "max": 0.02510198764503002
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.025420859456062317,
+        "max": 0.025420859456062317
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02574378252029419,
+        "max": 0.02574378252029419
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02607080712914467,
+        "max": 0.02607080712914467
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.026401985436677933,
+        "max": 0.026401985436677933
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02673737145960331,
+        "max": 0.02673737145960331
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.027077017351984978,
+        "max": 0.027077017351984978
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.027420977130532265,
+        "max": 0.027420977130532265
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.027769308537244797,
+        "max": 0.027769308537244797
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.028122061863541603,
+        "max": 0.028122061863541603
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02847929857671261,
+        "max": 0.02847929857671261
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.02884107269346714,
+        "max": 0.02884107269346714
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.029207441955804825,
+        "max": 0.029207441955804825
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.029578465968370438,
+        "max": 0.029578465968370438
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.029954202473163605,
+        "max": 0.029954202473163605
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03033471293747425,
+        "max": 0.03033471293747425
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.030720055103302002,
+        "max": 0.030720055103302002
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03111029416322708,
+        "max": 0.03111029416322708
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.031505487859249115,
+        "max": 0.031505487859249115
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.031905706971883774,
+        "max": 0.031905706971883774
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.032311003655195236,
+        "max": 0.032311003655195236
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03272145241498947,
+        "max": 0.03272145241498947
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03313711658120155,
+        "max": 0.03313711658120155
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.033558059483766556,
+        "max": 0.033558059483766556
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03398434817790985,
+        "max": 0.03398434817790985
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03441605344414711,
+        "max": 0.03441605344414711
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.034853242337703705,
+        "max": 0.034853242337703705
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.035295985639095306,
+        "max": 0.035295985639095306
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03574435040354729,
+        "max": 0.03574435040354729
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.036198411136865616,
+        "max": 0.036198411136865616
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03665824234485626,
+        "max": 0.03665824234485626
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.0371239148080349,
+        "max": 0.0371239148080349
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03759550303220749,
+        "max": 0.03759550303220749
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03807307779788971,
+        "max": 0.03807307779788971
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03855672478675842,
+        "max": 0.03855672478675842
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.039046511054039,
+        "max": 0.039046511054039
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.03954252228140831,
+        "max": 0.03954252228140831
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04004483297467232,
+        "max": 0.04004483297467232
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04055352136492729,
+        "max": 0.04055352136492729
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.041068676859140396,
+        "max": 0.041068676859140396
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.0415903739631176,
+        "max": 0.0415903739631176
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04211869835853577,
+        "max": 0.04211869835853577
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04265373572707176,
+        "max": 0.04265373572707176
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04319556802511215,
+        "max": 0.04319556802511215
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.0437442809343338,
+        "max": 0.0437442809343338
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04429996758699417,
+        "max": 0.04429996758699417
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.044862713664770126,
+        "max": 0.044862713664770126
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04543260484933853,
+        "max": 0.04543260484933853
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04600973799824715,
+        "max": 0.04600973799824715
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.046594202518463135,
+        "max": 0.046594202518463135
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04718609154224396,
+        "max": 0.04718609154224396
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.047785498201847076,
+        "max": 0.047785498201847076
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04839251935482025,
+        "max": 0.04839251935482025
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04900725185871124,
+        "max": 0.04900725185871124
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.04962979257106781,
+        "max": 0.04962979257106781
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05026024207472801,
+        "max": 0.05026024207472801
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05089870095252991,
+        "max": 0.05089870095252991
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.051545269787311554,
+        "max": 0.051545269787311554
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05220005288720131,
+        "max": 0.05220005288720131
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05286315083503723,
+        "max": 0.05286315083503723
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.053534675389528275,
+        "max": 0.053534675389528275
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.054214730858802795,
+        "max": 0.054214730858802795
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05490342155098915,
+        "max": 0.05490342155098915
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.055600862950086594,
+        "max": 0.055600862950086594
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05630716308951378,
+        "max": 0.05630716308951378
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05702243372797966,
+        "max": 0.05702243372797966
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05774679407477379,
+        "max": 0.05774679407477379
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05848035588860512,
+        "max": 0.05848035588860512
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.0592232346534729,
+        "max": 0.0592232346534729
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.05997554957866669,
+        "max": 0.05997554957866669
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06073741987347603,
+        "max": 0.06073741987347603
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06150897219777107,
+        "max": 0.06150897219777107
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06229032203555107,
+        "max": 0.06229032203555107
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06308159977197647,
+        "max": 0.06308159977197647
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06388293206691742,
+        "max": 0.06388293206691742
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06469443440437317,
+        "max": 0.06469443440437317
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06551625579595566,
+        "max": 0.06551625579595566
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06634850800037384,
+        "max": 0.06634850800037384
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06719134002923965,
+        "max": 0.06719134002923965
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06804487109184265,
+        "max": 0.06804487109184265
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06890925019979477,
+        "max": 0.06890925019979477
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.06978461146354675,
+        "max": 0.06978461146354675
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07067108899354935,
+        "max": 0.07067108899354935
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07156882435083389,
+        "max": 0.07156882435083389
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07247796654701233,
+        "max": 0.07247796654701233
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.073398657143116,
+        "max": 0.073398657143116
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07433104515075684,
+        "max": 0.07433104515075684
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07527527213096619,
+        "max": 0.07527527213096619
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07623150199651718,
+        "max": 0.07623150199651718
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07719987630844116,
+        "max": 0.07719987630844116
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07818054407835007,
+        "max": 0.07818054407835007
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.07917367666959763,
+        "max": 0.07917367666959763
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08017942309379578,
+        "max": 0.08017942309379578
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08119794726371765,
+        "max": 0.08119794726371765
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08222941309213638,
+        "max": 0.08222941309213638
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.0832739770412445,
+        "max": 0.0832739770412445
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08433181047439575,
+        "max": 0.08433181047439575
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08540307730436325,
+        "max": 0.08540307730436325
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08648795634508133,
+        "max": 0.08648795634508133
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08758661895990372,
+        "max": 0.08758661895990372
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08869923651218414,
+        "max": 0.08869923651218414
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.08982598781585693,
+        "max": 0.08982598781585693
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09096705168485641,
+        "max": 0.09096705168485641
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09212260693311691,
+        "max": 0.09212260693311691
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09329284727573395,
+        "max": 0.09329284727573395
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09447795152664185,
+        "max": 0.09447795152664185
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09567811340093613,
+        "max": 0.09567811340093613
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09689351171255112,
+        "max": 0.09689351171255112
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09812435507774353,
+        "max": 0.09812435507774353
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.09937083721160889,
+        "max": 0.09937083721160889
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.10063314437866211,
+        "max": 0.10063314437866211
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.10191149264574051,
+        "max": 0.10191149264574051
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1032060831785202,
+        "max": 0.1032060831785202
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.10451711714267731,
+        "max": 0.10451711714267731
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.10584480315446854,
+        "max": 0.10584480315446854
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1071893498301506,
+        "max": 0.1071893498301506
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.10855098068714142,
+        "max": 0.10855098068714142
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.10992991179227829,
+        "max": 0.10992991179227829
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.11132635921239853,
+        "max": 0.11132635921239853
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.11274053901433945,
+        "max": 0.11274053901433945
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.11417268961668015,
+        "max": 0.11417268961668015
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.11562303453683853,
+        "max": 0.11562303453683853
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.11709179729223251,
+        "max": 0.11709179729223251
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.11857921630144119,
+        "max": 0.11857921630144119
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12008553743362427,
+        "max": 0.12008553743362427
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12161099165678024,
+        "max": 0.12161099165678024
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12315581738948822,
+        "max": 0.12315581738948822
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12472027540206909,
+        "max": 0.12472027540206909
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12630459666252136,
+        "max": 0.12630459666252136
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12790904939174652,
+        "max": 0.12790904939174652
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.12953388690948486,
+        "max": 0.12953388690948486
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.13117936253547668,
+        "max": 0.13117936253547668
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.13284574449062347,
+        "max": 0.13284574449062347
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.13453328609466553,
+        "max": 0.13453328609466553
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.13624227046966553,
+        "max": 0.13624227046966553
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.13797296583652496,
+        "max": 0.13797296583652496
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.13972564041614532,
+        "max": 0.13972564041614532
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1415005922317505,
+        "max": 0.1415005922317505
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.14329807460308075,
+        "max": 0.14329807460308075
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.14511840045452118,
+        "max": 0.14511840045452118
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.14696183800697327,
+        "max": 0.14696183800697327
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.14882870018482208,
+        "max": 0.14882870018482208
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1507192850112915,
+        "max": 0.1507192850112915
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1526338756084442,
+        "max": 0.1526338756084442
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.15457279980182648,
+        "max": 0.15457279980182648
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.15653634071350098,
+        "max": 0.15653634071350098
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.15852482616901398,
+        "max": 0.15852482616901398
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.16053858399391174,
+        "max": 0.16053858399391174
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.16257791221141815,
+        "max": 0.16257791221141815
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.16464313864707947,
+        "max": 0.16464313864707947
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.16673460602760315,
+        "max": 0.16673460602760315
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.16885265707969666,
+        "max": 0.16885265707969666
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.17099758982658386,
+        "max": 0.17099758982658386
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1731697916984558,
+        "max": 0.1731697916984558
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.17536957561969757,
+        "max": 0.17536957561969757
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1775972992181778,
+        "max": 0.1775972992181778
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.17985332012176514,
+        "max": 0.17985332012176514
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.18213801085948944,
+        "max": 0.18213801085948944
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.18445171415805817,
+        "max": 0.18445171415805817
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.18679481744766235,
+        "max": 0.18679481744766235
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.18916767835617065,
+        "max": 0.18916767835617065
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1915706843137741,
+        "max": 0.1915706843137741
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.19400422275066376,
+        "max": 0.19400422275066376
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.19646866619586945,
+        "max": 0.19646866619586945
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.1989644169807434,
+        "max": 0.1989644169807434
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.20149187743663788,
+        "max": 0.20149187743663788
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2040514349937439,
+        "max": 0.2040514349937439
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2066435068845749,
+        "max": 0.2066435068845749
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2092685103416443,
+        "max": 0.2092685103416443
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.21192686259746552,
+        "max": 0.21192686259746552
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.214618980884552,
+        "max": 0.214618980884552
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.21734529733657837,
+        "max": 0.21734529733657837
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.22010624408721924,
+        "max": 0.22010624408721924
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.22290225327014923,
+        "max": 0.22290225327014923
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.22573380172252655,
+        "max": 0.22573380172252655
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.22860130667686462,
+        "max": 0.22860130667686462
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.23150524497032166,
+        "max": 0.23150524497032166
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.23444606363773346,
+        "max": 0.23444606363773346
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.23742423951625824,
+        "max": 0.23742423951625824
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2404402494430542,
+        "max": 0.2404402494430542
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.24349458515644073,
+        "max": 0.24349458515644073
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.24658770859241486,
+        "max": 0.24658770859241486
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.24972011148929596,
+        "max": 0.24972011148929596
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.25289231538772583,
+        "max": 0.25289231538772583
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.25610482692718506,
+        "max": 0.25610482692718506
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.25935813784599304,
+        "max": 0.25935813784599304
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.26265278458595276,
+        "max": 0.26265278458595276
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2659892737865448,
+        "max": 0.2659892737865448
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.26936814188957214,
+        "max": 0.26936814188957214
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.27278995513916016,
+        "max": 0.27278995513916016
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.27625522017478943,
+        "max": 0.27625522017478943
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2797645032405853,
+        "max": 0.2797645032405853
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.28331834077835083,
+        "max": 0.28331834077835083
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2869173586368561,
+        "max": 0.2869173586368561
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.29056209325790405,
+        "max": 0.29056209325790405
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.2942531108856201,
+        "max": 0.2942531108856201
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.297991007566452,
+        "max": 0.297991007566452
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3017764091491699,
+        "max": 0.3017764091491699
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.30560991168022156,
+        "max": 0.30560991168022156
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3094920814037323,
+        "max": 0.3094920814037323
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3134235739707947,
+        "max": 0.3134235739707947
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.31740501523017883,
+        "max": 0.31740501523017883
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3214370012283325,
+        "max": 0.3214370012283325
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.32552024722099304,
+        "max": 0.32552024722099304
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.32965534925460815,
+        "max": 0.32965534925460815
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3338429629802704,
+        "max": 0.3338429629802704
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.33808380365371704,
+        "max": 0.33808380365371704
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.34237849712371826,
+        "max": 0.34237849712371826
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.34672772884368896,
+        "max": 0.34672772884368896
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.35113224387168884,
+        "max": 0.35113224387168884
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3555926978588104,
+        "max": 0.3555926978588104
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.360109806060791,
+        "max": 0.360109806060791
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3646842837333679,
+        "max": 0.3646842837333679
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3693169057369232,
+        "max": 0.3693169057369232
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3740083575248718,
+        "max": 0.3740083575248718
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.37875938415527344,
+        "max": 0.37875938415527344
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3835707902908325,
+        "max": 0.3835707902908325
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.38844332098960876,
+        "max": 0.38844332098960876
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.39337772130966187,
+        "max": 0.39337772130966187
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.3983748257160187,
+        "max": 0.3983748257160187
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4034354090690613,
+        "max": 0.4034354090690613
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.40856024622917175,
+        "max": 0.40856024622917175
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.41375023126602173,
+        "max": 0.41375023126602173
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4190061092376709,
+        "max": 0.4190061092376709
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4243287742137909,
+        "max": 0.4243287742137909
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4297190308570862,
+        "max": 0.4297190308570862
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4351777732372284,
+        "max": 0.4351777732372284
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4407058656215668,
+        "max": 0.4407058656215668
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.44630417227745056,
+        "max": 0.44630417227745056
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4519735872745514,
+        "max": 0.4519735872745514
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4577150344848633,
+        "max": 0.4577150344848633
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.46352940797805786,
+        "max": 0.46352940797805786
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.46941766142845154,
+        "max": 0.46941766142845154
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.47538068890571594,
+        "max": 0.47538068890571594
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.48141947388648987,
+        "max": 0.48141947388648987
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4875349700450897,
+        "max": 0.4875349700450897
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.4937281608581543,
+        "max": 0.4937281608581543
+      },
+      {
+        "bitwidth": 8,
+        "is_symmetric": "True",
+        "min": -0.5,
+        "max": 0.5
+      }
+    ]
+  }
+}

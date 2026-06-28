@@ -1,0 +1,1 @@
+lhs:=qnn_quantized_matmul/input/lhs_uint8.raw rhs:=qnn_quantized_matmul/input/rhs_per_tensor_uint8.raw

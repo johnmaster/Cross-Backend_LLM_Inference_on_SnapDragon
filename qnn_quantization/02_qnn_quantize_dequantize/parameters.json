@@ -1,0 +1,10 @@
+{
+  "elements": 32768,
+  "minimum": -0.10890811681747437,
+  "maximum": 1.6871534585952759,
+  "symmetric_scale": 0.013284672902325007,
+  "symmetric_qnn_offset": -128,
+  "asymmetric_scale": 0.007043378727108825,
+  "asymmetric_zero_point": 15,
+  "asymmetric_qnn_offset": -15
+}
