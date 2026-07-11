@@ -1,0 +1,7 @@
+qwen_block_custom_qnn/model/data/
+qwen_block_custom_qnn/model/*.onnx
+qwen_block_custom_qnn/test_data/layer*_prefill_seq*/
+qwen_block_custom_qnn/generated/*.cpp
+qwen_block_custom_qnn/generated/*.bin
+qwen_block_custom_qnn/generated/*.json
+qwen_block_custom_qnn/model_libs/

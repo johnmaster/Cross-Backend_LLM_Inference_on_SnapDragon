@@ -1,8 +1,13 @@
 # Cross-Backend LLM Inference on Snapdragon
 
-This repository records local LLM inference experiments on a Snapdragon 8 Gen 3 phone, using OnePlus 12 as the test device. The current benchmark focus is Qwen2.5-3B-Instruct GGUF models running through `llama.cpp` on CPU and OpenCL GPU backends.
+This repository records local LLM inference and acceleration experiments on a Snapdragon 8 Gen 3 phone, using OnePlus 12 as the test device.
 
-The project is still experimental. CPU results are the most stable baseline; OpenCL results show useful GPU acceleration for prompt prefill, but not yet for token-by-token decode.
+There are two project lines:
+
+1. `llama.cpp` benchmark line: Qwen2.5 GGUF models on CPU and OpenCL GPU backends.
+2. QNN/HTP engineering line: ONNX -> QNN conversion, quantization study, custom HTP OpPackage development, profiling, and migration toward a real Qwen decoder block.
+
+The second line is the main portfolio direction for edge-LLM inference / QNN / HTP performance optimization roles.
 
 ## Device and Runtime
 
@@ -29,12 +34,80 @@ The project is still experimental. CPU results are the most stable baseline; Ope
 ├── docs/
 │   ├── analysis.md
 │   └── oneplus12-llm-startup.md
+├── qnn_quantization/
+│   ├── 01_int8_per_tensor/
+│   ├── 06_onnx_qdq_matmul/
+│   └── 11_w4fp16_blockwise_matmul/
+├── qnn_custom_ops/
+│   ├── matmul_qhpi_hvx_8row_fp32_store_multithread/
+│   ├── matmul_qhpi_hvx_8row_lhs_prepack_fp32_store/
+│   └── matmul_qhpi_hvx_8row_lhs_tile_cache_fp32_store/
+├── tiny_llm_block/
+│   ├── model/
+│   ├── generated/
+│   └── device_output/
+├── tiny_llm_block_custom_matmul/
+│   ├── tools/
+│   ├── generated/
+│   └── device_output/
+├── qwen_block_custom_qnn/
+│   ├── README.md
+│   ├── model/
+│   ├── generated/
+│   └── device_output/
 └── scripts/
     ├── run_baseline.sh
     ├── run_quant_sweep.sh
     ├── run_gpu_ngl_sweep.sh
     └── run_opencl_ngl_sweep.sh
 ```
+
+## QNN/HTP Custom Op Portfolio Line
+
+The QNN/HTP part of this repo is built as a step-by-step engineering path:
+
+```text
+QNN quantization basics
+-> standalone custom MatMul OpPackage
+-> Qwen-style tiny decoder block
+-> QNN converter-generated C++ patching
+-> custom HTP op inside a transformer block
+-> qnn-net-run on Snapdragon device
+-> qnn-profile-viewer CSV analysis
+-> migration plan for a real Qwen decoder block
+```
+
+Key directories:
+
+| Directory | Purpose |
+|---|---|
+| `qnn_quantization/` | QNN quantization formula, QDQ, calibration, W4/W8 experiments |
+| `qnn_custom_ops/` | QNN HTP custom MatMul OpPackage implementations |
+| `tiny_llm_block/` | Fixed-shape Qwen-style decoder block exported to ONNX and QNN |
+| `tiny_llm_block_custom_matmul/` | Replaces transformer projection ops with custom HTP MatMul and profiles results |
+| `qwen_block_custom_qnn/` | Real Qwen decoder-block migration case study entry point |
+
+The strongest current custom-op result is the LHS tile-cache q_proj replacement:
+
+```text
+custom_lhs_tile_cache root_cycles=480235 qnn_us=4821 netrun_us=6238 q_proj_cycles=146244
+```
+
+Compared with the earlier independent LHS-prepack version:
+
+```text
+custom_lhs_prepack root_cycles=1682834 qnn_us=7960 netrun_us=10762 q_proj_cycles=1338650
+```
+
+This shows that fusing `PackLhs + MatMul` inside the custom op reduced q_proj custom cycles from million-level to about `146K` cycles. The remaining gap to QNN builtin is now mostly a graph/runtime integration problem: extra Cast/Reshape nodes, external OpPackage dispatch, and QNN builtin's internal fusion or static weight prepacking.
+
+The next important portfolio milestone is documented in:
+
+```text
+qwen_block_custom_qnn/README.md
+```
+
+That milestone is to extract a real Qwen decoder layer, convert it through QNN, replace a projection such as `q_proj` with the custom HTP MatMul, and report correctness and profiling against QNN builtin.
 
 ## Key Results
 
