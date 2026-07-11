@@ -1,0 +1,1 @@
+lhs:=/home/lingbok/Cross-Backend_LLM_Inference_on_SnapDragon/tiny_llm_block_custom_matmul/test_data/q_proj_prefill/lhs.raw rhs:=/home/lingbok/Cross-Backend_LLM_Inference_on_SnapDragon/tiny_llm_block_custom_matmul/test_data/q_proj_prefill/rhs.raw

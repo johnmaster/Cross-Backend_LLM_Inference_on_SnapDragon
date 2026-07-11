@@ -120,3 +120,33 @@ LHS prepack + RHS inline vector conversion
 
 若 RHS 是跨多次 inference 不变的权重，把 RHS Q13 打包移到 graph load 或
 离线模型生成阶段，才可能消除每次 inference 的 PackRhs 成本并改变结论。
+
+## tiny block full graph 结果
+
+在 `tiny_llm_block_custom_matmul` 中继续把完整 prefill graph 的 q_proj 替换成
+both-prepack 版本：
+
+```text
+hidden_states -> Cast -> PackLhs ----+
+                                     +-> MatMulQhpiHvx8RowBothPrepackFp32Store
+q_proj_weight -> Cast -> PackRhs ----+
+```
+
+正确性与其他 custom q_proj 版本一致：
+
+```text
+prefill hidden: max=2.47808099e-02 mean=3.26919090e-03 cosine=0.999762475
+prefill key: max=8.54909420e-04 mean=1.22145138e-04 cosine=0.999999940
+prefill value: max=5.04963100e-04 mean=1.06622887e-04 cosine=1.000000000
+```
+
+统一跳过第一次 warm-up 后取 median：
+
+```text
+custom_lhs_prepack  q_proj_cycles=1.338M netrun=10762 us
+custom_both_prepack q_proj_cycles=1.402M netrun=10922 us
+```
+
+full graph 结论和 standalone 一致：RHS runtime prepack 没有带来收益。`PackRhs`
+节点本身在 execute 阶段很轻，但 MatMul kernel 没有变快，说明当前瓶颈更可能在
+中间 tensor 读写、输出 store、调度开销，或者 builtin 内部更深的 weight layout。

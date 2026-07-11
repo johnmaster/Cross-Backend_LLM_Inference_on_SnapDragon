@@ -1,0 +1,3 @@
+qwen_block_custom_qnn/model/data/
+qwen_block_custom_qnn/test_data/layer*_prefill_seq*/
+qwen_block_custom_qnn/model_libs/

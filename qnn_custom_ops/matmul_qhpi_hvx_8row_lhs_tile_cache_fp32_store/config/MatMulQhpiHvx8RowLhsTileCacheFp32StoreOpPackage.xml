@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<OpDefCollection
+        PackageName="MatMulQhpiHvx8RowLhsTileCacheFp32StoreOpPackage"
+        Domain="aisw"
+        Version="1.0"
+        UseQHPI="true">
+
+    <OpDefList>
+        <OpDef>
+            <Name>MatMulQhpiHvx8RowLhsTileCacheFp32Store</Name>
+
+            <Description>
+                <Content>
+                    FP16-input batched matrix multiplication with FP32 output:
+                    output[B,H,M,N] =
+                    lhs[B,H,M,K] * rhs[B,H,K,N].
+                    Broadcasting and transpose are not supported.
+                </Content>
+            </Description>
+
+            <Input>
+                <Name>lhs</Name>
+                <Description>
+                    <Content>Left matrix with shape [B,H,M,K].</Content>
+                </Description>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, head, rows, reduction]</Text>
+                </Shape>
+            </Input>
+
+            <Input>
+                <Name>rhs</Name>
+                <Description>
+                    <Content>Right matrix with shape [B,H,K,N].</Content>
+                </Description>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, head, reduction, columns]</Text>
+                </Shape>
+            </Input>
+
+            <Input>
+                <Name>bias</Name>
+                <Description>
+                    <Content>Optional FP32 bias with shape [N] or [1,1,1,N].</Content>
+                </Description>
+                <Mandatory>false</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>1D or 4D</Rank>
+                    <Text>[columns] or [1,1,1,columns]</Text>
+                </Shape>
+            </Input>
+
+            <Output>
+                <Name>output</Name>
+                <Description>
+                    <Content>Matrix product with shape [B,H,M,N].</Content>
+                </Description>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, head, rows, columns]</Text>
+                </Shape>
+            </Output>
+
+            <SupportedBackend>HTP</SupportedBackend>
+        </OpDef>
+    </OpDefList>
+
+    <SupplementalOpDefList Backend="HTP">
+        <SupportedOps>
+            <OpName>MatMulQhpiHvx8RowLhsTileCacheFp32Store</OpName>
+        </SupportedOps>
+
+        <SupplementalOpDef>
+            <Name>MatMulQhpiHvx8RowLhsTileCacheFp32Store</Name>
+
+            <Input>
+                <Name>lhs</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Input>
+
+            <Input>
+                <Name>rhs</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_16</Datatype>
+            </Input>
+
+            <Input>
+                <Name>bias</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_32</Datatype>
+            </Input>
+
+            <Output>
+                <Name>output</Name>
+                <Datatype>QNN_DATATYPE_FLOAT_32</Datatype>
+            </Output>
+        </SupplementalOpDef>
+    </SupplementalOpDefList>
+
+</OpDefCollection>
