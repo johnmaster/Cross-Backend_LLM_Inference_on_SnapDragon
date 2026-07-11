@@ -479,25 +479,91 @@ python tiny_llm_block/compare_qnn_output.py \
 
 ### 8. HTP profiling
 
-profiling 使用 `burst`、detailed level、每张图 10 次 inference。排除第一次
-warm-up 后取 median：
+QNN profiling 的流程分成三步：
 
-上面的命令已经通过 `--perf_profile burst` 固定性能档位。进行 profiling 时，再
-增加：
+1. 在设备端运行带 `--profiling_level detailed` 的 `qnn-net-run`，生成
+   `qnn-profiling-data_0.log`。
+2. 用 `adb pull` 把 profile log 拉回主机。
+3. 在主机端用 `qnn-profile-viewer` 转成 CSV，再用 `compare_profile.py`
+   汇总关键指标。
+
+注意工具名是 `qnn-profile-viewer`，不是 `qnn-profiler-viewer`。它是主机端工具，
+通常位于：
 
 ```text
---profiling_level detailed
---num_inferences 10
+$QAIRT_SDK_ROOT/bin/x86_64-linux-clang/qnn-profile-viewer
 ```
 
-运行后将 profile log 拉回主机，并转换为 CSV：
+先确认设备已连接：
 
 ```bash
+adb devices
+```
+
+然后重新运行 prefill profiling。这里仍然使用 `--perf_profile burst` 固定性能档位，
+并用 `--num_inferences 10` 连续运行 10 次，后续统计时会跳过第一次 warm-up：
+
+```bash
+adb shell '
+cd /data/local/tmp/qnn/tiny_llm_block
+export LD_LIBRARY_PATH="$PWD/lib:$PWD/../lib:$LD_LIBRARY_PATH"
+export ADSP_LIBRARY_PATH="$PWD/../dsp;$PWD/../lib;/vendor/dsp/cdsp;/vendor/lib/rfsa/adsp;/system/lib/rfsa/adsp;/dsp"
+rm -rf output_prefill_profile
+../bin/qnn-net-run \
+  --backend ../lib/libQnnHtp.so \
+  --model lib/libtiny_block_prefill.so \
+  --input_list input/device_prefill_input_list.txt \
+  --output_dir output_prefill_profile \
+  --input_data_type float \
+  --output_data_type float_only \
+  --perf_profile burst \
+  --profiling_level detailed \
+  --num_inferences 10 \
+  --log_level info
+'
+```
+
+再运行 decode profiling：
+
+```bash
+adb shell '
+cd /data/local/tmp/qnn/tiny_llm_block
+export LD_LIBRARY_PATH="$PWD/lib:$PWD/../lib:$LD_LIBRARY_PATH"
+export ADSP_LIBRARY_PATH="$PWD/../dsp;$PWD/../lib;/vendor/dsp/cdsp;/vendor/lib/rfsa/adsp;/system/lib/rfsa/adsp;/dsp"
+rm -rf output_decode_profile
+../bin/qnn-net-run \
+  --backend ../lib/libQnnHtp.so \
+  --model lib/libtiny_block_decode.so \
+  --input_list input/device_decode_input_list.txt \
+  --output_dir output_decode_profile \
+  --input_data_type float \
+  --output_data_type float_only \
+  --perf_profile burst \
+  --profiling_level detailed \
+  --num_inferences 10 \
+  --log_level info
+'
+```
+
+运行成功后，设备端目录中会出现：
+
+```text
+/data/local/tmp/qnn/tiny_llm_block/output_prefill_profile/qnn-profiling-data_0.log
+/data/local/tmp/qnn/tiny_llm_block/output_decode_profile/qnn-profiling-data_0.log
+```
+
+拉回主机并转成 CSV：
+
+```bash
+mkdir -p \
+  tiny_llm_block/device_output/prefill \
+  tiny_llm_block/device_output/decode
+
 adb pull \
-  "$QNN_PHONE_ROOT/tiny_llm_block/output_prefill/qnn-profiling-data_0.log" \
+  "$QNN_PHONE_ROOT/tiny_llm_block/output_prefill_profile/qnn-profiling-data_0.log" \
   tiny_llm_block/device_output/prefill/
 adb pull \
-  "$QNN_PHONE_ROOT/tiny_llm_block/output_decode/qnn-profiling-data_0.log" \
+  "$QNN_PHONE_ROOT/tiny_llm_block/output_decode_profile/qnn-profiling-data_0.log" \
   tiny_llm_block/device_output/decode/
 
 qnn-profile-viewer \
@@ -508,6 +574,98 @@ qnn-profile-viewer \
   --output tiny_llm_block/device_output/decode/profile.csv
 
 python tiny_llm_block/compare_profile.py
+```
+
+如果 `qnn-profiling-data_0.log` 已经在本地存在，就不需要重新跑设备端，只需要从
+`qnn-profile-viewer` 开始：
+
+```bash
+/home/lingbok/Qualcomm/qairt/2.47.0.260601/bin/x86_64-linux-clang/qnn-profile-viewer \
+  --input_log tiny_llm_block/device_output/prefill/qnn-profiling-data_0.log \
+  --output tiny_llm_block/device_output/prefill/profile.csv
+
+/home/lingbok/Qualcomm/qairt/2.47.0.260601/bin/x86_64-linux-clang/qnn-profile-viewer \
+  --input_log tiny_llm_block/device_output/decode/qnn-profiling-data_0.log \
+  --output tiny_llm_block/device_output/decode/profile.csv
+
+python tiny_llm_block/compare_profile.py
+```
+
+如果当前 shell 找不到 `qnn-profile-viewer`，先初始化 QAIRT 环境，或者直接使用完整路径：
+
+```bash
+export QAIRT_SDK_ROOT=/home/lingbok/Qualcomm/qairt/2.47.0.260601
+source "$QAIRT_SDK_ROOT/bin/envsetup.sh"
+
+"$QAIRT_SDK_ROOT/bin/x86_64-linux-clang/qnn-profile-viewer" \
+  --input_log tiny_llm_block/device_output/prefill/qnn-profiling-data_0.log \
+  --output tiny_llm_block/device_output/prefill/profile.csv
+```
+
+#### CSV 内容怎么读
+
+`qnn-profile-viewer` 生成的 CSV 前几行是版本和来源信息，真正的数据表从下面这一行
+开始：
+
+```text
+Msg Timestamp, Message, Time, Unit of Measurement, Timing Source, Event Level, Event Identifier
+```
+
+各列含义：
+
+| 列 | 含义 |
+|---|---|
+| `Msg Timestamp` | profiling 事件时间戳 |
+| `Message` | 阶段名，例如 `INIT`、`COMPOSE GRAPHS`、`FINALIZE`、`EXECUTE`、`DE-INIT` |
+| `Time` | 耗时、cycle 数或计数值 |
+| `Unit of Measurement` | 单位，例如 `US`、`CYCLES`、`COUNT`、`INF/SEC` |
+| `Timing Source` | 统计来源，常见为 `NETRUN` 或 `BACKEND` |
+| `Event Level` | `ROOT` 表示整图级事件，`SUB-EVENT` 表示子事件或单个 op |
+| `Event Identifier` | 事件名字，例如 `QNN accelerator (execute) time` 或 `_Softmax:OpId_127 (cycles)` |
+
+最常看的不是 `INIT` 和 `FINALIZE`，而是 `EXECUTE`。一次 inference 会对应一组
+`EXECUTE` 行；使用 `--num_inferences 10` 时，CSV 里会有 10 组这样的记录。
+
+整图性能先看 `EXECUTE + ROOT`：
+
+```text
+EXECUTE,3301,US,NETRUN,ROOT,Graph 0: tiny_block_decode
+EXECUTE,1851,US,BACKEND,ROOT,QNN accelerator (execute) time
+EXECUTE,149241,CYCLES,BACKEND,ROOT,Accelerator (execute) time (cycles)
+EXECUTE,3278,US,BACKEND,ROOT,QNN (execute) time
+```
+
+这些行的含义：
+
+| 指标 | 含义 |
+|---|---|
+| `NETRUN` | `qnn-net-run` 看到的端到端 graph execute 时间，包含更多运行框架、RPC、I/O 或调度开销 |
+| `QNN (execute) time` | QNN backend 侧执行一次 graph 的时间 |
+| `QNN accelerator (execute) time` | QNN 统计的 accelerator execute 相关时间 |
+| `Accelerator (execute) time (cycles)` | HTP accelerator 上执行的 cycle 数，适合比较计算负载 |
+| `Number of HVX threads used` | backend 本次执行使用的 HVX 线程数 |
+
+定位热点再看 `EXECUTE + SUB-EVENT + CYCLES`：
+
+```text
+EXECUTE,13807,CYCLES,BACKEND,SUB-EVENT,_Transpose_3:OpId_119 (cycles)
+EXECUTE,7492,CYCLES,BACKEND,SUB-EVENT,_MatMul_3:OpId_120 (cycles)
+EXECUTE,6984,CYCLES,BACKEND,SUB-EVENT,_Softmax:OpId_127 (cycles)
+```
+
+这些行表示某个 QNN op 在 accelerator 上消耗的 cycle。`OpId_*` 是 converter
+生成的 graph node 编号，名字来自 ONNX/QNN 中间图，不一定直接等于 PyTorch
+模块名。很多 `Reshape`、部分 layout 转换或被融合的节点可能显示为 0 cycles，
+这通常表示该节点没有单独形成可计时的 accelerator kernel，或者被其他 op/fusion
+吸收。
+
+`compare_profile.py` 会读取两个 `profile.csv`，筛选 `EXECUTE + ROOT` 中的三类
+指标，并跳过第一次 warm-up 后取 median：
+
+```text
+Accelerator (execute) time (cycles)
+QNN accelerator (execute) time
+NETRUN graph execute time
 ```
 
 | 模式 | accelerator cycles | QNN accelerator | NetRun |

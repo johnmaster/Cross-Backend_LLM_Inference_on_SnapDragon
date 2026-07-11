@@ -1,4 +1,4 @@
-input log file location, /tmp/tiny_prefill_10.log
+input log file location, tiny_llm_block/device_output/prefill/qnn-profiling-data_0.log
 qnn-profile-viewer version, v2.47.0.260601114230
 qnn-net-run version, v2.47.0.260601114230
 Backend version, v2.47.0.260601114230
