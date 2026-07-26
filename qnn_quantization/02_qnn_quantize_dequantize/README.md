@@ -94,7 +94,7 @@ Asymmetric:
 
 所有 QNN raw quantized values 都在 NumPy reference 的 1 LSB 范围内。
 
-## 学到的 QNN 行为
+## 验证到的 QNN 行为
 
 1. `QNN_DATATYPE_UFIXED_POINT_8` 描述物理存储类型。
 2. `QNN_QUANTIZATION_ENCODING_SCALE_OFFSET` 描述数值解释方式。
@@ -104,12 +104,4 @@ Asymmetric:
 5. 当前 SampleApp 不能把 `SFIXED_POINT_8` 作为 native graph output 导出，
    因此实验使用 UINT8 storage 表达 signed symmetric INT8。
 6. 只观察 Quantize->Dequantize FP32 输出可能具有误导性。Graph prepare
-   可以折叠或改变 Q/DQ 数据通路；学习量化时应同时导出 raw quantized tensor。
-
-## 下一步
-
-学习 per-axis quantization，让每个 channel 使用独立 scale：
-
-```text
-QNN_QUANTIZATION_ENCODING_AXIS_SCALE_OFFSET
-```
+   可以折叠或改变 Q/DQ 数据通路，因此还需导出 raw quantized tensor。

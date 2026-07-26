@@ -1,6 +1,6 @@
 # QHPI Scalar MatMul
 
-## 1. 这个例子是什么
+## 1. 当前实现
 
 本目录实现了一个基于 QHPI External Op Package API 的 FLOAT32 批量矩阵乘法：
 

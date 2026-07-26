@@ -676,9 +676,3 @@ NETRUN graph execute time
 decode 的 accelerator cycles 明显少于 prefill，但 QNN accelerator 和 NetRun
 延迟下降有限，说明单 token 阶段已明显受到 KV I/O、layout conversion、调度和
 小算子固定开销影响。
-
-## 后续阶段
-
-1. 比较 W8A8 与 W8A16 的逐层误差和 cycles。
-2. 扩展 prefill sequence length 与 KV cache length sweep。
-3. 将 Linear 逐步替换为仓库中的自定义 MatMul OpPackage。

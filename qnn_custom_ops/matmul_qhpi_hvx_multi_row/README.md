@@ -638,19 +638,3 @@ QNN profile，而是重新编译 SampleApp，将已有的 profile event 提升�
 
 在官方 profile event 成功输出后，手工探针已从两个 kernel 中完全移除，
 正式结果来自纯净内核。
-
-## 14. 后续优化方向
-
-Multi-Row 已经消除了四行之间重复的 RHS 转换，但每个 `4x64` tile 仍会在
-每次执行时进行 scalar FP16 -> Q13 转换。后续可以分别建立独立目录验证：
-
-```text
-matmul_qhpi_hvx_vector_convert
-matmul_qhpi_hvx_rhs_prepack
-matmul_qhpi_hvx_vector_store
-matmul_qhpi_hvx_multithread
-matmul_qhpi_hvx_combined
-```
-
-建议保持每个目录只有一个主要优化变量，并始终使用相同输入、相同 shape、
-相同 profile app 和相同统计方法进行比较。

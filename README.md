@@ -26,6 +26,15 @@ tiny Qwen-style block: builtin -> custom q_proj
                 |
                 v
 real Qwen2.5-0.5B layer0: builtin -> custom q_proj
+                |
+                v
+device-Q13 prefill projection -> faster than builtin
+                |
+                v
+KV-cache decode -> grouped GQA -> delta KV
+                |
+                v
+persistent runner -> rpcmem/memRegister shared cache
 ```
 
 ## 当前完成状态
@@ -37,7 +46,9 @@ real Qwen2.5-0.5B layer0: builtin -> custom q_proj
 | 独立 HTP Custom MatMul | 已完成 | 从标量 reference 逐步发展到 QHPI/HVX 8-row、FP32 store、prepack 和 tile-cache |
 | Tiny Qwen-style block | 已完成 | prefill/decode ONNX、QNN builtin、设备正确性和 profiling 均已跑通 |
 | Tiny block custom q_proj | 已完成 | 成功 patch converter 生成的 QNN C++ 并加载外部 HTP OpPackage |
-| 真实 Qwen2.5 layer0 | 已完成 | 真实权重导出、builtin baseline、custom q_proj 和 fused-bias 实验均已完成 |
+| 真实 Qwen2.5 layer0 prefill | 已完成 | device-Q13 4x128 custom q_proj 保持逐 bit 输出，NetRun `13105 us`，比 builtin 快 `11.61%` |
+| 真实 Qwen2.5 layer0 decode | 已完成 | past16/32/64/128、grouped-GQA、host-managed delta KV 和正确性/profile 均已完成 |
+| Persistent KV-cache runner | 已完成 | 一次初始化/分配后连续 100 步；shared MEMHANDLE 模式 step-total 中位数均值 `4941.67 us` |
 
 ## 测试平台
 
@@ -79,7 +90,7 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 
 各目录中的 README 是具体实验的可复现文档；根 README 只提供全局入口和关键结论。
 
-## 推荐阅读与复现顺序
+## 实验导航与复现入口
 
 ### 1. Snapdragon 上的 `llama.cpp`
 
@@ -88,9 +99,6 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 - `data/cpu/`、`data/gpu/` 中的原始 benchmark 日志
 - `scripts/run_baseline.sh`、`run_quant_sweep.sh` 和
   `run_opencl_ngl_sweep.sh`
-
-这条路线回答“现成推理引擎在不同 backend 上表现如何”，并建立 prefill 与 decode
-需要分别分析的性能观念。
 
 ### 2. QNN 量化
 
@@ -134,8 +142,8 @@ QHPI scalar reference
 - `matmul_qhpi_hvx` 开始使用真实 HVX SIMD 指令。
 - `matmul_qhpi_hvx_multi_row*` 和 `matmul_qhpi_hvx_8row*` 分别验证 tile、转换、
   store、线程和 prepack 策略。
-- `matmul_qhpi_hvx_8row_lhs_tile_cache_fp32_store` 是当前用于 Transformer
-  `q_proj` 替换的主要版本。
+- `matmul_qhpi_hvx_8row_fp32_store_multithread` 当前同时承载 prefill
+  device-Q13 projection 实验和 decode attention 负实验所需的 QHPI op。
 
 这里必须区分“被调度到 HVX worker”和“真正使用 HVX SIMD”；同样，外部开发环境
 缺少 HMX tile/layout 控制细节，本仓库没有把普通标量或单条探测指令误称为 HMX
@@ -202,8 +210,8 @@ RMSNorm
 -> residual
 ```
 
-固定输入为 `[1, 16, 896]`，输出 `hidden_out [1,16,896]` 和
-`present_key/present_value [1,2,16,64]`。当前已经完成：
+prefill 固定输入为 `[1,16,896]`，decode 使用 token=1 和真实 KV cache。
+当前已经完成：
 
 1. 真实权重下载与文件说明。
 2. PyTorch layer0 prefill 和固定 shape ONNX 导出。
@@ -211,25 +219,102 @@ RMSNorm
 4. ONNX -> QNN C++/bin -> Android model library。
 5. OnePlus 12 HTP builtin baseline。
 6. patch converter 生成的 `_MatMul`，替换真实 `q_proj`。
-7. 加载 LHS tile-cache HTP OpPackage 并完成正确性/profiling。
-8. 三输入 fused-bias custom op 实验。
+7. multithread + LHS tile-cache，并针对 `M=16` 验证 4-row 分工。
+8. 用独立 HTP conversion probe 导出设备实际的 FP16-to-Q13 INT16 权重。
+9. 离线嵌入 device-Q13 RHS，删除 q_proj runtime Cast。
+10. 将 device-Q13 kernel 从 4x64 扩展到 4x128。
+11. 删除最终 BIN 中不再引用的 FP32 q_proj payload。
+12. 导出真实 KV-cache decode graph，并建立 past16/32/64/128 sweep。
+13. 用 grouped-GQA 消除显式 K/V Tile。
+14. 改为 graph 只输出 current K/V delta，宿主维护 persistent cache。
+15. 实现一次初始化、一次 tensor 分配的连续 decode runner。
+16. 为 runner 加入 rpcmem + `memRegister` shared MEMHANDLE。
+17. 验证并记录 FP16 KV boundary、fused attention、I/O cache 和 NCHW V boundary
+    等未采用方案。
 
-关键结果（10 次 inference，去 warmup 后取中位数）：
+#### Prefill：device-Q13 custom q_proj 已超过 builtin
 
-| 版本 | hidden_out vs reference cosine | root cycles | QNN us | NetRun us |
-|---|---:|---:|---:|---:|
-| QNN builtin | 0.999999881 | 2,276,136 | 14,777 | 14,826 |
-| custom q_proj | 0.999998629 | 3,171,078 | 16,254 | 16,310 |
-| custom q_proj multithread 8-row | 0.999998629 | 3,222,940 | 15,816 | 15,861 |
-| custom q_proj multithread 4-row | 0.999998629 | 3,442,442 | 15,630 | 15,884 |
-| custom q_proj fused bias | 0.999977410 | 3,113,048 | 16,717 | 16,764 |
+10 次 inference、去 warmup 中位数：
 
-结论是：真实 Qwen `q_proj` 的 custom HTP 接入已经成功，数值也可用，但当前 custom
-路径仍慢于 builtin。multithread + LHS tile-cache 把 old custom 的 NetRun 从
-`16310` 降至 `15861 us`，将相对 builtin 的差距从约 10% 缩小到约 7%。针对
-`M=16` 的 4-row 分支进一步改善 accelerator wall time，但完整 layer0 NetRun 基本
-持平。普通 custom 路径仍包含 FP16 Cast、Reshape、外部 bias Add 和 OpPackage
-调度开销；fused-bias 虽去掉外部 Add，却带来更大误差且没有端到端收益。
+| 版本 | q_proj cycles | NetRun |
+|---|---:|---:|
+| QNN builtin | graph optimizer 内部实现 | `14826 us` |
+| 初始 custom q_proj | 较高 | `16310 us` |
+| multithread 8-row | 改善 | `15861 us` |
+| device-Q13 4x64 | `826368` | `13152 us` |
+| **device-Q13 4x128** | **`582392`** | **`13105 us`** |
+
+最终 4x128 版本相对 builtin 快 `1721 us / 11.61%`，且输出与先前 4-row custom
+逐 bit 相同。移除未使用 FP32 q_proj payload 后，model library 另减少
+`3,211,536 bytes`。
+
+#### Decode：采用 builtin projection + grouped-GQA delta KV
+
+decode 中 `M=1`，复用面向 prefill 的 device-Q13 kernel 没有收益：
+
+```text
+past16 builtin decode:          11007 us
+past16 device-Q13 q_proj:       11041 us（未采用）
+```
+
+past128 的 adopted graph 依次完成：
+
+```text
+普通 GQA
+-> grouped-GQA 删除显式 K/V Tile
+-> graph 只输出 current K/V delta
+-> host 维护固定窗口 cache
+```
+
+| past128 版本 | NetRun | 结论 |
+|---|---:|---|
+| 普通 decode | `12032 us` | 初始基线 |
+| grouped-GQA | `11862 us` | 输出逐 bit 相同 |
+| **grouped-GQA + delta KV** | **`10907 us`** | 正式 decode graph |
+
+delta-KV 相对 full present K/V 改善 `955 us / 8.05%`，并将 K/V 输出 payload
+缩小 129 倍。
+
+#### Persistent runner 与共享 cache
+
+专用 QNN C++ runner 让 backend/context/graph 和 tensor 只创建一次，连续执行
+固定 past128 sliding-window decode；每步把 current K/V 写回同一 cache buffer。
+step 0 的 hidden/current-K/current-V 与正式 baseline 全部逐 bit相同。
+
+100 步去首步的普通 persistent runner：
+
+```text
+graphExecute median:       4988 us
+CPU cache update median:     34 us
+step total median:         5037 us
+```
+
+关闭 profiling 的相同 100 次进程 wall time 从 qnn-net-run 的 `1.573442 s`
+降至 persistent runner 的 `1.316746 s`，改善 `16.32%`。加入 rpcmem +
+`memRegister` 后，两组正反夹心共 6 次测试的 step-total 中位数均值从
+`4977.67` 降至 `4941.67 us`，再改善约 `0.72%`。
+
+这里必须区分不同计时口径：`5037 us` 是应用内 `graphExecute + cache update`，
+不含初始化和逐步文件 I/O；与 qnn-net-run 的公平 runner 级证据是相同 100 次的
+进程 wall-time A/B。
+
+#### 已验证但未采用
+
+| 实验 | 结果 | 原因 |
+|---|---|---|
+| fused-bias q_proj | 更慢且误差增大 | 外部 Add 删除没有转化为端到端收益 |
+| FP16 KV boundary | `10907 -> 11767 us` | Cast/native-I/O 成本超过带宽收益 |
+| qnn-net-run shared/input cache | 慢 `2.50%/3.55%` | 注册、同步或 bookkeeping |
+| custom fused decode attention | 最快仍 `19432 us` | 标量 FP32/softmax 远慢于 builtin |
+| NCHW value-cache boundary | persistent step 慢 `0.99%` | 下游 V Concat/layout rewrite 变差 |
+
+当前结论不是“所有 custom op 都更快”，而是：
+
+- prefill 的固定 `M=16` q_proj 采用 device-Q13 4x128 custom kernel；
+- decode 的 `M=1` projection 和 attention 保留 QNN builtin；
+- decode 系统层收益主要来自 grouped-GQA、delta KV、persistent tensor 和 shared
+  registered memory；
+- 所有正优化和负优化都保留了生成文件、真机输出、CSV profile 与复现说明。
 
 这项结果的价值不仅是 kernel 快慢，还在于完整验证了：
 
@@ -334,3 +419,4 @@ QAIRT SDK、Hexagon SDK/Tools、Android NDK，并在设备上准备相应 QNN ru
 - [Tiny Qwen-style block](tiny_llm_block/README.md)
 - [Tiny block custom MatMul](tiny_llm_block_custom_matmul/README.md)
 - [真实 Qwen2.5 block custom QNN](qwen_block_custom_qnn/README.md)
+- [真实 Qwen2.5 block 优化实验日志](qwen_block_custom_qnn/OPTIMIZATION_LOG.md)

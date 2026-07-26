@@ -72,8 +72,8 @@ Provider    = MatMulQhpiFp16ScalarOpPackageInterfaceProvider
 
 | 目录 | API | 数据类型 | 实际计算资源 | 用途 |
 |---|---|---|---|---|
-| `matmul/` | Legacy HTP Op Package | FP32 | 标量 | Legacy API 入门 |
-| `matmul_qhpi_scalar/` | QHPI | FP32 | 标量实现 | QHPI 流程入门 |
+| `matmul/` | Legacy HTP Op Package | FP32 | 标量 | Legacy API 基线 |
+| `matmul_qhpi_scalar/` | QHPI | FP32 | 标量实现 | QHPI 基线 |
 | `matmul_qhpi_fp16_scalar/` | QHPI | FP16 | 标量主线程 | FP16 正确性基线 |
 | 后续 `matmul_qhpi_hvx/` | QHPI | FP16/FP32 | HVX | 向量化优化目标 |
 
@@ -93,14 +93,3 @@ qnn-op-package-generator \
 
 后续实际编译前，应先清理旧 build 目录，再按现有 HTP/QHPI 编译流程生成新的
 `libQnnMatMulQhpiFp16ScalarOpPackage.so` 和 `libcustom_matmul_qhpi_fp16_scalar_model.so`。
-
-## 下一步
-
-新建独立的 `matmul_qhpi_hvx/`，保持相同 shape、数据与期望输出，然后逐步加入：
-
-1. HVX 128-byte 对齐和尾部处理；
-2. FP16 向量加载与乘法；
-3. reduction 累加；
-4. 分块与多 slice；
-5. 可选 VTCM 数据复用；
-6. 数值、反汇编和性能三类验证。

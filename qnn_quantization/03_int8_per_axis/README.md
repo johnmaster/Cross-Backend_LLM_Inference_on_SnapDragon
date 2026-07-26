@@ -69,8 +69,3 @@ per-tensor scale 由动态范围最大的 channel 决定。较小的 channel 只
 per-axis 为每列单独选择 scale，使小范围 channel 也可以充分使用 INT8 的
 有效范围。代价是额外保存 64 个 scale，并且 kernel 反量化时需要按输出列
 选择 scale。
-
-## 下一步
-
-建立 QNN `AXIS_SCALE_OFFSET` Quantize graph，直接导出 UINT8 raw tensor，
-并与本目录的 NumPy per-axis reference 做 1 LSB 比较。

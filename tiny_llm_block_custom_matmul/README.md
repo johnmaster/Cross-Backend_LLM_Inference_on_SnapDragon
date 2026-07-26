@@ -4,27 +4,6 @@
 仓库里的自定义 QNN HTP MatMul OpPackage。它不是直接上完整 Qwen，而是先在一个
 固定 shape、可验证、可 profiling 的 tiny decoder block 上完成闭环。
 
-## 为什么从这里开始
-
-直接修改 Qwen 级别的大模型会同时遇到模型切分、KV cache、量化、layout、动态
-shape、converter 支持和自定义 op 接口等多个变量。`tiny_llm_block` 已经具备：
-
-- 固定 shape 的 prefill/decode ONNX。
-- NumPy/PyTorch/ONNX/QNN builtin 多级 reference。
-- Android HTP 运行脚本和 raw 输入输出。
-- `qnn-profile-viewer` CSV profiling 结果。
-
-因此这里的目标是先做一个“小而完整”的算子替换实验：
-
-```text
-tiny_llm_block builtin QNN graph
-  -> 选择一个 MatMul/Linear 节点
-  -> 替换为 custom HTP MatMul OpPackage
-  -> 比较 raw 输出正确性
-  -> 比较 qnn-profile-viewer CSV 性能
-  -> 再推广到更多 Linear，最后再迁移到 Qwen block
-```
-
 ## Baseline 输入
 
 当前 baseline 来自：
@@ -67,10 +46,7 @@ output: FP32 [B, H, M, N]
   原始 ONNX `MatMul` 名字。
 - 当前 custom op 不支持 broadcasting 和 transpose，weight layout 必须提前对齐。
 
-所以第一版实验不要一次替换所有 projection，而是先挑一个 shape 最简单、输出容易
-对齐的 MatMul 做单点替换。
-
-## 推荐阶段
+## 替换与验证流程
 
 ### 1. 盘点 ONNX MatMul
 
@@ -181,12 +157,6 @@ tiny_llm_block_custom_matmul/
   device_output/  # 后续保存设备输出和 profiling CSV
 ```
 
-## 当前第一步
-
-先运行 `tools/inspect_onnx_matmuls.py`，确定 prefill/decode 中哪些 MatMul 最适合作为
-第一个 custom op 替换点。拿到这张表以后，再进入 graph rewriting 或手写 QNN model
-source。
-
 ## 当前 ONNX 盘点结果
 
 `tiny_block_prefill_seq32.onnx` 中有 9 个 MatMul：
@@ -206,31 +176,6 @@ source。
 `tiny_block_decode_past32.onnx` 也有同样 9 个 MatMul，但 sequence 维度是
 `1`，例如 projection 变成 `[1, 1, 256] x [256, N]`。decode 的 M 太小，
 不适合作为第一版 8-row custom op 性能验证入口。
-
-## 第一版替换建议
-
-第一版建议从 prefill 的 `/MatMul`，也就是 `q_proj_weight [256, 256]` 开始：
-
-```text
-baseline ONNX shape:
-  [1, 32, 256] x [256, 256] -> [1, 32, 256]
-
-custom op shape:
-  lhs [1, 1, 32, 256]
-  rhs [1, 1, 256, 256]
-  out [1, 1, 32, 256]
-```
-
-选择它的原因：
-
-- `M=32` 能被 8-row tile 整除，可以直接验证 multi-row kernel。
-- `K=256, N=256` 和现有 custom op demo 的核心 shape 最接近。
-- 权重是 initializer，不需要处理动态右输入。
-- 输出 rank 和 hidden size 都不变，后续接回 graph 最简单。
-
-如果这个点跑通，再扩展到 `/MatMul_5` 的 `o_proj_weight [256, 256]`，然后再做
-`gate/up/down` 这些更大的 MLP projection。attention score/value 的两个动态
-MatMul 放到后面，因为它们涉及 mask、Softmax、KV layout 和动态右输入。
 
 ## q_proj Standalone Fixture
 
@@ -1146,13 +1091,3 @@ converter 生成 QNN C++
 -> qnn-profile-viewer
 -> 数值和性能对比
 ```
-
-下一步如果继续优化，优先级应该是继续减少 custom op 的图级开销和静态 weight 开销，
-而不是继续盲目加线程。更可能有效的方向包括：
-
-- 对静态 weight 做真正离线 prepack，把 RHS Q13 bits 直接写进 model bin，
-  而不是 runtime graph 里再加一个 `PackRhs` 节点。
-- 尝试把 q_proj 的 Cast/Reshape 也吸收到 custom op 或 converter patch 中进一步减少
-  graph 节点。
-- 继续研究 QNN builtin 的 graph-level 优化和权重预处理路径，但注意不要只看
-  builtin subevent cycles，因为这类计数可能没有完整归因。

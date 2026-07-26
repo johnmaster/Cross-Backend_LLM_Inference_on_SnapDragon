@@ -142,7 +142,7 @@ AXIS_SCALE_OFFSET 不能通过独立 Quantize -> Dequantize 小图学习完整�
 在 HTP 的实际模型中，per-axis encoding 通常附着在静态 Conv/MatMul
 权重上，由计算算子直接消费，而不是经过独立 Dequantize。
 
-因此下一步应建立：
+后续验证使用：
 
 ```text
 FP32 activation
@@ -159,7 +159,7 @@ per-axis weight MatMul
 FP32 reference
 ```
 
-## 学习重点
+## 接口约束
 
 1. axis 是 tensor dimension index，不是随意的 channel 编号。
 2. `numScaleOffsets` 必须等于所选 axis 的维度。

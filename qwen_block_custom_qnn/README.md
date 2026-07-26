@@ -11,50 +11,6 @@
 在 Snapdragon 设备上完成正确性、性能和瓶颈分析闭环。
 ```
 
-## 为什么这一步最重要
-
-`tiny_llm_block` 证明的是技术链路可控：
-
-```text
-ONNX -> QNN converter -> QNN C++ patch -> custom HTP OpPackage
--> Android qnn-net-run -> qnn-profile-viewer -> correctness/perf analysis
-```
-
-但更关键的问题是：
-
-```text
-这套能力能不能迁移到真实 LLM？
-```
-
-所以本目录要回答的是：
-
-- 是否能从真实 Qwen 模型中抽取一个 decoder block。
-- 是否能识别真实 graph 中的 `q_proj/k_proj/v_proj/o_proj/gate_proj/up_proj/down_proj`。
-- 是否能替换 QNN converter 产物中的 projection op。
-- 替换后是否能在 HTP 上运行，并给出数值误差和 profiling 结论。
-- 如果 custom op 没有超过 QNN builtin，能否解释瓶颈在哪里。
-
-这比单纯继续优化 tiny block 更接近真实端侧 LLM 推理优化工作流。
-
-## 建议选型
-
-第一阶段建议选一个小 Qwen 模型或 Qwen-style 模型，先抽取单层，而不是直接全模型：
-
-| 候选 | 用途 | 原因 |
-|---|---|---|
-| `Qwen/Qwen2.5-0.5B-Instruct` | 首选真实 Qwen-family case | hidden/intermediate 相对小，结构真实，和当前 tiny block 更接近 |
-| `Qwen/Qwen3-0.6B` | 后续可选 | 更新一代 Qwen，但先用 Qwen2.5 降低变量 |
-| `Qwen2.5-1.5B-Instruct` | 第二阶段 | 更接近真实端侧负载，但导出/运行压力更大 |
-| 当前 `tiny_llm_block` | 对照组 | 已跑通完整 QNN/HTP/custom op 流程 |
-
-不要一开始就追求完整 Qwen 文本生成。更合理的第一阶段目标是：
-
-```text
-真实 Qwen decoder layer 单层 prefill/decode
-```
-
-因为它已经覆盖 attention、RoPE、KV cache、MLP、projection 和 QNN profiling。
-
 ## 复现顺序总览
 
 从当前仓库状态复现这条链路，顺序是：
@@ -87,9 +43,7 @@ custom 的逐 bit 输出，还在同一设备上实现了端到端快于 QNN bui
 
 ## M0. 先拿到真实 Qwen 模型
 
-第一步是下载并固定一个真实模型快照。不要直接在脚本里每次
-`from_pretrained("Qwen/Qwen2.5-0.5B-Instruct")` 自动联网下载；那样不利于复现。
-建议把模型放到一个固定的本地目录。当前本机已经下载到：
+模型快照固定在：
 
 ```text
 qwen_block_custom_qnn/model/data/models/Qwen2.5-0.5B-Instruct/
@@ -1642,8 +1596,7 @@ root cycles 均支持采用 grouped-GQA，且输出逐 bit 相同。采用结果
 device_output/builtin_layer0_decode_past128_grouped_gqa/
 ```
 
-这是当前 KV-cache decode 的第一项正式采用优化。下一步应在更多 past length 上验证
-grouped-GQA 的稳定收益，然后研究固定容量 cache，避免每个 token 输出完整 Concat。
+这是当前 KV-cache decode 的第一项正式采用优化。
 
 ### KV cache 优化 3：宿主维护 cache，只输出当前 K/V delta
 

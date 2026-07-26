@@ -52,7 +52,7 @@ python qnn_quantization/10_percentile_calibration/compare_output.py
 | outlier percentile 99.9 | 1.422% | 253 | 0.189% | 0.00673 | 27.09 dB |
 | outlier percentile 99.99 | 1.422% | 253 | 0.018% | 0.00753 | 34.61 dB |
 
-## 如何理解
+## 结论
 
 min-max 保留所有离群值，因此没有输入 clipping，但正常数据只使用 31 个量化
 级，rounding error 较大。

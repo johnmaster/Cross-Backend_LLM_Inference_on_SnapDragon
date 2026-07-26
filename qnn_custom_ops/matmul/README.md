@@ -758,7 +758,7 @@ qnn-sample-app
 
 ## 18. 当前实现的边界
 
-当前代码用于学习完整链路，不适合作为高性能产品 kernel：
+当前代码用于验证完整链路，不适合作为高性能产品 kernel：
 
 - 仅支持 FLOAT32。
 - 仅支持 rank 4。
@@ -798,24 +798,7 @@ QHPI_RESOURCE_HMX
 
 但 QHPI HMX kernel 仍涉及平台支持、HMX layout、VTCM tiling、资源调度和可用 API，不能仅靠 resource flag 完成矩阵乘法。
 
-## 20. 后续优化路线
-
-建议按以下顺序继续：
-
-```text
-1. 增加多组 shape 正确性测试
-2. 补充更严格的 shape validation
-3. 调整 rhs 访问或预转置，改善连续内存访问
-4. 实现 cache-friendly blocking
-5. 研究 PlainFloatTensor_TCM 和 VTCM tiling
-6. 实现并验证 HVX vector kernel
-7. 使用 profiling 对比标量/HVX 版本
-8. 学习 QHPI kernel 注册模型
-9. 研究目标平台对 QHPI_RESOURCE_HMX 的实际支持
-10. 对比 QNN 内置 qti.aisw::MatMul 的性能
-```
-
-## 21. Git 注意事项
+## 20. Git 注意事项
 
 建议提交：
 
@@ -842,7 +825,7 @@ qnn_custom_ops/**/*.o
 
 公开上传前，需要检查 QAIRT 生成文件中的 Qualcomm proprietary/confidential 声明以及 SDK 许可，不要提交 SDK 自带 headers、工具或预编译库。
 
-## 22. 结论
+## 21. 结论
 
 本实验已经证明：
 

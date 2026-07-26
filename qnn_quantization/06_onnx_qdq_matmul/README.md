@@ -51,7 +51,7 @@ python qnn_quantization/06_onnx_qdq_matmul/generate_qdq_model.py
 
 脚本生成两种 ONNX：
 
-- `int8_per_axis_qdq_matmul.onnx`：用于学习 QDQ 表达。
+- `int8_per_axis_qdq_matmul.onnx`：QDQ 表达模型。
 - `fp32_matmul.onnx`：用于 QAIRT calibration + overrides 的实际部署流程。
 
 `quantization_overrides.json` 为 RHS 的 256 个输出列分别提供 symmetric INT8

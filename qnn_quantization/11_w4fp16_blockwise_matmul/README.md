@@ -1,6 +1,6 @@
 # W4FP16 Blockwise MatMul
 
-## 先纠正术语
+## 数据格式
 
 QAIRT 2.47 HTP 文档明确列出的是：
 

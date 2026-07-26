@@ -107,7 +107,7 @@ raw 数据解释和 MatMul 图是吻合的。
 直接手写 model-library 元数据的路径不可用或触发了 HTP prepare 缺陷。
 
 后续应使用 ONNX QDQ/量化配置，经 QAIRT converter 生成模型，再验证
-`INT8 activation + per-axis weight MatMul`。这也是更贴近真实部署的学习路径。
+`INT8 activation + per-axis weight MatMul`。
 
 ## 比较结果
 
