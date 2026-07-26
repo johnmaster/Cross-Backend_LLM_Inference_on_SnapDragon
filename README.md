@@ -220,12 +220,16 @@ RMSNorm
 |---|---:|---:|---:|---:|
 | QNN builtin | 0.999999881 | 2,276,136 | 14,777 | 14,826 |
 | custom q_proj | 0.999998629 | 3,171,078 | 16,254 | 16,310 |
+| custom q_proj multithread 8-row | 0.999998629 | 3,222,940 | 15,816 | 15,861 |
+| custom q_proj multithread 4-row | 0.999998629 | 3,442,442 | 15,630 | 15,884 |
 | custom q_proj fused bias | 0.999977410 | 3,113,048 | 16,717 | 16,764 |
 
 结论是：真实 Qwen `q_proj` 的 custom HTP 接入已经成功，数值也可用，但当前 custom
-路径仍慢于 builtin。普通 custom 版本比 builtin 增加了 FP16 Cast、Reshape、外部
-bias Add 和 OpPackage 调度开销；fused-bias 虽去掉外部 Add，却带来更大误差且没有
-端到端收益，因此不作为默认版本。
+路径仍慢于 builtin。multithread + LHS tile-cache 把 old custom 的 NetRun 从
+`16310` 降至 `15861 us`，将相对 builtin 的差距从约 10% 缩小到约 7%。针对
+`M=16` 的 4-row 分支进一步改善 accelerator wall time，但完整 layer0 NetRun 基本
+持平。普通 custom 路径仍包含 FP16 Cast、Reshape、外部 bias Add 和 OpPackage
+调度开销；fused-bias 虽去掉外部 Add，却带来更大误差且没有端到端收益。
 
 这项结果的价值不仅是 kernel 快慢，还在于完整验证了：
 

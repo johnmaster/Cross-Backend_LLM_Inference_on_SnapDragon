@@ -32,7 +32,8 @@
   /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/System/QnnSystemProfile.h \
   make/../src/WrapperUtils/QnnWrapperUtils.hpp \
   make/../src/QnnSampleApp.hpp make/../src/Utils/IOTensor.hpp \
-  make/../src/Utils/QnnSampleAppUtils.hpp make/../src/SampleApp.hpp
+  make/../src/Utils/QnnSampleAppUtils.hpp make/../src/SampleApp.hpp \
+  make/../src/QnnTypeMacros.hpp
 make/../src/Utils/DataUtil.hpp:
 /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/QnnTypes.h:
 /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/QnnCommon.h:
@@ -69,3 +70,4 @@ make/../src/QnnSampleApp.hpp:
 make/../src/Utils/IOTensor.hpp:
 make/../src/Utils/QnnSampleAppUtils.hpp:
 make/../src/SampleApp.hpp:
+make/../src/QnnTypeMacros.hpp:

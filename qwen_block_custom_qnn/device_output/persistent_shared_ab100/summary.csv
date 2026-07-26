@@ -1,0 +1,9 @@
+order,mode,graph_execute_median_us,cache_update_median_us,step_total_median_us
+1,normal,4938,36,4974
+2,shared,4891,39,4934
+3,normal,4920,37,4968
+4,shared,4896,40,4936
+5,normal,4954,36,4991
+6,shared,4919,39,4955
+aggregate,normal_mean_of_medians,4937.33,36.33,4977.67
+aggregate,shared_mean_of_medians,4902.00,39.33,4941.67

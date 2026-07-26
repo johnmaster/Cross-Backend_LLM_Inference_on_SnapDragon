@@ -23,7 +23,12 @@ extern QHPI_OpInfo_v1 matmulqhpihvx8rowfp32storemultithreadOpInfo;
 // op package info
 const char* const sg_packageName = "MatMulQhpiHvx8RowFp32StoreMultithreadOpPackage";  // package name passed in as compile flag
 
-static std::array<const char*, 1> sg_opNames{{"MatMulQhpiHvx8RowFp32StoreMultithread"}};
+static std::array<const char*, 4> sg_opNames{{
+    "MatMulQhpiHvx8RowFp32StoreMultithread",
+    "MatMulQhpiHvxOfflineQ13RhsFp32StoreMultithread",
+    "ConvertFp16ToDeviceQ13",
+    "Qwen2DecodeAttentionPast128Fp32"
+}};
 
 static Qnn_ApiVersion_t sg_sdkApiVersion  = QNN_HTP_API_VERSION_INIT;
 static QnnOpPackage_Info_t sg_packageInfo = QNN_OP_PACKAGE_INFO_INIT;
@@ -125,6 +130,21 @@ Qnn_ErrorHandle_t MatMulQhpiHvx8RowFp32StoreMultithreadOpPackageValidateOpConfig
           return QNN_OP_PACKAGE_ERROR_VALIDATION_FAILURE;
         }
     }
+    else if (std::string(opConfig.v1.typeName) == "MatMulQhpiHvxOfflineQ13RhsFp32StoreMultithread"){
+        if (opConfig.v1.numOfParams != 0 || opConfig.v1.numOfInputs != 2 || opConfig.v1.numOfOutputs != 1){
+          return QNN_OP_PACKAGE_ERROR_VALIDATION_FAILURE;
+        }
+    }
+    else if (std::string(opConfig.v1.typeName) == "ConvertFp16ToDeviceQ13"){
+        if (opConfig.v1.numOfParams != 0 || opConfig.v1.numOfInputs != 1 || opConfig.v1.numOfOutputs != 1){
+          return QNN_OP_PACKAGE_ERROR_VALIDATION_FAILURE;
+        }
+    }
+    else if (std::string(opConfig.v1.typeName) == "Qwen2DecodeAttentionPast128Fp32"){
+        if (opConfig.v1.numOfParams != 0 || opConfig.v1.numOfInputs != 3 || opConfig.v1.numOfOutputs != 1){
+          return QNN_OP_PACKAGE_ERROR_VALIDATION_FAILURE;
+        }
+    }
     else{
         return QNN_OP_PACKAGE_ERROR_VALIDATION_FAILURE;
     }
@@ -182,4 +202,3 @@ const char* qhpi_init() {
 #ifdef __cplusplus
 }
 #endif
-

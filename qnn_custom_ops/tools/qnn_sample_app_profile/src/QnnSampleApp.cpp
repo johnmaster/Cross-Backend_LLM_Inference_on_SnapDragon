@@ -23,6 +23,7 @@
 #include "QnnDlcUtils.hpp"
 #include "QnnSampleApp.hpp"
 #include "QnnSampleAppUtils.hpp"
+#include "QnnTypeMacros.hpp"
 #include "QnnWrapperUtils.hpp"
 
 using namespace qnn;
@@ -46,7 +47,9 @@ sample_app::QnnSampleApp::QnnSampleApp(QnnFunctionPointers qnnFunctionPointers,
                                        std::string saveBinaryName,
                                        unsigned int numInferences,
                                        bool serializeProfileLogs,
-                                       std::string dlcPath)
+                                       std::string dlcPath,
+                                       bool persistentDecodePast128,
+                                       bool persistentSharedBuffer)
     : m_qnnFunctionPointers(qnnFunctionPointers),
       m_outputPath(outputPath),
       m_saveBinaryName(saveBinaryName),
@@ -57,10 +60,13 @@ sample_app::QnnSampleApp::QnnSampleApp(QnnFunctionPointers qnnFunctionPointers,
       m_profilingLevel(profilingLevel),
       m_serializeProfileLogs(serializeProfileLogs),
       m_dumpOutputs(dumpOutputs),
+      m_ioTensor(&m_qnnFunctionPointers.qnnInterface,
+                 persistentSharedBuffer),
       m_isBackendInitialized(false),
       m_isContextCreated(false),
       m_numInferences(numInferences),
-      m_dlcPath(dlcPath)
+      m_dlcPath(dlcPath),
+      m_persistentDecodePast128(persistentDecodePast128)
 {
   split(m_inputListPaths, inputListPaths, ',');
   split(m_opPackagePaths, opPackagePaths, ',');
@@ -320,6 +326,7 @@ sample_app::StatusCode sample_app::QnnSampleApp::createContext() {
     return StatusCode::FAILURE;
   }
   m_isContextCreated = true;
+  m_ioTensor.getContextInfo(&m_context);
   return StatusCode::SUCCESS;
 }
 
@@ -524,6 +531,7 @@ sample_app::StatusCode sample_app::QnnSampleApp::createFromBinary() {
     }
   }
   m_isContextCreated = true;
+  m_ioTensor.getContextInfo(&m_context);
   if (StatusCode::SUCCESS == returnStatus) {
     for (size_t graphIdx = 0; graphIdx < m_graphsCount; graphIdx++) {
       if (nullptr == m_qnnFunctionPointers.qnnInterface.graphRetrieve) {
@@ -806,6 +814,9 @@ sample_app::StatusCode sample_app::QnnSampleApp::freeDevice() {
 // This function runs all the graphs present in model.so by reading
 // inputs from input_list based files and writes output to .raw files.
 sample_app::StatusCode sample_app::QnnSampleApp::executeGraphs() {
+  if (m_persistentDecodePast128) {
+    return executePersistentDecodePast128();
+  }
   auto returnStatus = StatusCode::SUCCESS;
   for (unsigned int run = 0; run < m_numInferences; run++) {
     for (size_t graphIdx = 0; graphIdx < m_graphsCount; graphIdx++) {
@@ -911,6 +922,181 @@ sample_app::StatusCode sample_app::QnnSampleApp::executeGraphs() {
     }
   } /* loop numInferences */
 
+  qnn_wrapper_api::freeGraphsInfo(&m_graphsInfo, m_graphsCount);
+  m_graphsInfo = nullptr;
+  return returnStatus;
+}
+
+sample_app::StatusCode sample_app::QnnSampleApp::executePersistentDecodePast128() {
+  if (m_graphsCount != 1 || m_inputFileLists.empty() ||
+      m_inputFileLists[0].empty()) {
+    QNN_ERROR("Persistent past128 mode requires exactly one graph and one input set.");
+    return StatusCode::FAILURE;
+  }
+
+  auto graphInfo = (*m_graphsInfo)[0];
+  Qnn_Tensor_t* inputs = nullptr;
+  Qnn_Tensor_t* outputs = nullptr;
+  if (iotensor::StatusCode::SUCCESS !=
+      m_ioTensor.setupInputAndOutputTensors(&inputs, &outputs, graphInfo)) {
+    QNN_ERROR("Failed to allocate persistent graph tensors.");
+    return StatusCode::FAILURE;
+  }
+
+  iotensor::StatusCode populateStatus;
+  size_t numInputFilesPopulated = 0;
+  size_t batchSize = 0;
+  std::tie(populateStatus, numInputFilesPopulated, batchSize) =
+      m_ioTensor.populateInputTensors(0,
+                                     m_inputFileLists[0],
+                                     0,
+                                     false,
+                                     m_inputNameToIndex[0],
+                                     inputs,
+                                     graphInfo,
+                                     m_inputDataType);
+  if (iotensor::StatusCode::SUCCESS != populateStatus) {
+    QNN_ERROR("Failed to populate persistent decode inputs.");
+    m_ioTensor.tearDownInputAndOutputTensors(
+        inputs, outputs, graphInfo.numInputTensors, graphInfo.numOutputTensors);
+    return StatusCode::FAILURE;
+  }
+
+  auto findTensor = [](Qnn_Tensor_t* tensors,
+                       uint32_t count,
+                       const char* name) -> Qnn_Tensor_t* {
+    for (uint32_t index = 0; index < count; ++index) {
+      const char* tensorName = QNN_TENSOR_GET_NAME(tensors[index]);
+      if (tensorName != nullptr && std::strcmp(tensorName, name) == 0) {
+        return &tensors[index];
+      }
+    }
+    return nullptr;
+  };
+
+  Qnn_Tensor_t* pastKey =
+      findTensor(inputs, graphInfo.numInputTensors, "past_key");
+  Qnn_Tensor_t* pastValue =
+      findTensor(inputs, graphInfo.numInputTensors, "past_value");
+  Qnn_Tensor_t* currentKey =
+      findTensor(outputs, graphInfo.numOutputTensors, "current_key");
+  Qnn_Tensor_t* currentValue =
+      findTensor(outputs, graphInfo.numOutputTensors, "current_value");
+  if (pastKey == nullptr || pastValue == nullptr || currentKey == nullptr ||
+      currentValue == nullptr) {
+    QNN_ERROR("Persistent graph must expose past_key/past_value and current_key/current_value.");
+    m_ioTensor.tearDownInputAndOutputTensors(
+        inputs, outputs, graphInfo.numInputTensors, graphInfo.numOutputTensors);
+    return StatusCode::FAILURE;
+  }
+
+  float* keyCache = static_cast<float*>(m_ioTensor.getTensorBuffer(pastKey));
+  float* valueCache = static_cast<float*>(m_ioTensor.getTensorBuffer(pastValue));
+  float* keyDelta = static_cast<float*>(m_ioTensor.getTensorBuffer(currentKey));
+  float* valueDelta = static_cast<float*>(m_ioTensor.getTensorBuffer(currentValue));
+  constexpr size_t kHeads = 2;
+  constexpr size_t kHeadDim = 64;
+  constexpr size_t kTokenElements = kHeads * kHeadDim;
+  constexpr size_t kPastTokens = 128;
+  constexpr size_t kCacheElements = kPastTokens * kTokenElements;
+  if (keyCache == nullptr || valueCache == nullptr || keyDelta == nullptr ||
+      valueDelta == nullptr) {
+    QNN_ERROR("Persistent past128 tensor sizes do not match the fixed contract.");
+    m_ioTensor.tearDownInputAndOutputTensors(
+        inputs, outputs, graphInfo.numInputTensors, graphInfo.numOutputTensors);
+    return StatusCode::FAILURE;
+  }
+
+  std::ofstream timings(m_outputPath + "/persistent_decode_timings.csv",
+                        std::ios::out | std::ios::trunc);
+  timings << "step,graph_execute_us,cache_update_us,step_total_us\n";
+  StatusCode returnStatus = StatusCode::SUCCESS;
+  const uint32_t* valueDims = QNN_TENSOR_GET_DIMENSIONS(*pastValue);
+  const bool valueCacheNchw =
+      QNN_TENSOR_GET_RANK(*pastValue) == 4 &&
+      valueDims != nullptr && valueDims[0] == 1 && valueDims[1] == 2 &&
+      valueDims[2] == 128 && valueDims[3] == 64;
+  for (unsigned int step = 0; step < m_numInferences; ++step) {
+    const uint64_t startUs = getTimeStampInUs();
+    const Qnn_ErrorHandle_t executeStatus =
+        m_qnnFunctionPointers.qnnInterface.graphExecute(
+            graphInfo.graph,
+            inputs,
+            graphInfo.numInputTensors,
+            outputs,
+            graphInfo.numOutputTensors,
+            m_profileBackendHandle,
+            nullptr);
+    const uint64_t executeStopUs = getTimeStampInUs();
+    if (QNN_GRAPH_NO_ERROR != executeStatus) {
+      QNN_ERROR("Persistent graph execution failed at step %u.", step);
+      returnStatus = StatusCode::FAILURE;
+      break;
+    }
+
+    const uint64_t updateStartUs = getTimeStampInUs();
+    if (step + 1 < m_numInferences) {
+      // Both QNN cache inputs use NHWC [1,128,64,2]. Delta outputs use
+      // logical NCHW [1,2,1,64], so append them with head interleaving.
+      std::memmove(keyCache,
+                   keyCache + kTokenElements,
+                   (kCacheElements - kTokenElements) * sizeof(float));
+      float* keyTail = keyCache + kCacheElements - kTokenElements;
+      for (size_t dim = 0; dim < kHeadDim; ++dim) {
+        for (size_t head = 0; head < kHeads; ++head) {
+          keyTail[dim * kHeads + head] = keyDelta[head * kHeadDim + dim];
+        }
+      }
+      if (valueCacheNchw) {
+        for (size_t head = 0; head < kHeads; ++head) {
+          float* headCache =
+              valueCache + head * kPastTokens * kHeadDim;
+          std::memmove(headCache,
+                       headCache + kHeadDim,
+                       (kPastTokens - 1) * kHeadDim * sizeof(float));
+          std::memcpy(headCache + (kPastTokens - 1) * kHeadDim,
+                      valueDelta + head * kHeadDim,
+                      kHeadDim * sizeof(float));
+        }
+      } else {
+        std::memmove(valueCache,
+                     valueCache + kTokenElements,
+                     (kCacheElements - kTokenElements) * sizeof(float));
+        float* valueTail = valueCache + kCacheElements - kTokenElements;
+        for (size_t dim = 0; dim < kHeadDim; ++dim) {
+          for (size_t head = 0; head < kHeads; ++head) {
+            valueTail[dim * kHeads + head] =
+                valueDelta[head * kHeadDim + dim];
+          }
+        }
+      }
+    }
+    const uint64_t updateStopUs = getTimeStampInUs();
+    timings << step << "," << (executeStopUs - startUs) << ","
+            << (updateStopUs - updateStartUs) << ","
+            << (updateStopUs - startUs) << "\n";
+
+    if (step == 0 && m_dumpOutputs &&
+        iotensor::StatusCode::SUCCESS !=
+            m_ioTensor.writeOutputTensors(0,
+                                          0,
+                                          graphInfo.graphName,
+                                          outputs,
+                                          graphInfo.numOutputTensors,
+                                          m_outputDataType,
+                                          m_graphsCount,
+                                          m_outputPath,
+                                          numInputFilesPopulated,
+                                          batchSize)) {
+      QNN_ERROR("Failed to save persistent step-0 outputs.");
+      returnStatus = StatusCode::FAILURE;
+      break;
+    }
+  }
+  timings.close();
+
+  m_ioTensor.tearDownInputAndOutputTensors(
+      inputs, outputs, graphInfo.numInputTensors, graphInfo.numOutputTensors);
   qnn_wrapper_api::freeGraphsInfo(&m_graphsInfo, m_graphsCount);
   m_graphsInfo = nullptr;
   return returnStatus;

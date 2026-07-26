@@ -1,0 +1,4 @@
+mode,runs,root_cycles,qnn_accel_us,qnn_us,netrun_us
+normal,30,2350585,9654,11736,11758
+shared_buffer,30,2331778,9713,12028,12052
+input_tensor_set_cache,30,2295054,9550,12145,12175

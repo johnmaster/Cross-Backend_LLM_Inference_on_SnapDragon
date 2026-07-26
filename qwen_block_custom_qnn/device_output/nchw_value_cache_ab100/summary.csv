@@ -1,0 +1,7 @@
+mode,repeat,graph_execute_median_us,cache_update_median_us,step_total_median_us
+old_nhwc_value,a,4918,39,4960
+nchw_value,a,4926,41,4978
+old_nhwc_value,b,4882,39,4919
+nchw_value,b,4938,40,4999
+old_nhwc_value,mean_of_medians,4900.00,39.00,4939.50
+nchw_value,mean_of_medians,4932.00,40.50,4988.50

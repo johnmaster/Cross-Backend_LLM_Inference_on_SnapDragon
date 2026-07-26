@@ -1,0 +1,19 @@
+{
+  "bytes": 1605632,
+  "conversion": "float32 -> IEEE float16 -> round-to-nearest-away-from-zero Q13",
+  "dtype": "int16",
+  "elements": 802816,
+  "fractional_bits": 13,
+  "maximum": 9600,
+  "minimum": -10048,
+  "output_member": "onnx__MatMul_227_q13.raw",
+  "saturated_max": 0,
+  "saturated_min": 0,
+  "scale": 0.0001220703125,
+  "sha256": "a2b31be6d81ad2714f89c2ad4628e6f63cbb873418b4ada012a11bf72e8fd26b",
+  "shape": [
+    896,
+    896
+  ],
+  "source_member": "onnx__MatMul_227.raw"
+}

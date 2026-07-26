@@ -30,7 +30,9 @@
   make/../src/Log/Logger.hpp make/../src/PAL/include/PAL/Directory.hpp \
   make/../src/PAL/include/PAL/FileOp.hpp \
   make/../src/PAL/include/PAL/Path.hpp \
-  make/../src/PAL/include/PAL/StringOp.hpp make/../src/QnnTypeMacros.hpp
+  make/../src/PAL/include/PAL/StringOp.hpp \
+  make/../src/PAL/include/PAL/DynamicLoading.hpp \
+  make/../src/QnnTypeMacros.hpp
 make/../src/Utils/DataUtil.hpp:
 /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/QnnTypes.h:
 /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/QnnCommon.h:
@@ -65,4 +67,5 @@ make/../src/PAL/include/PAL/Directory.hpp:
 make/../src/PAL/include/PAL/FileOp.hpp:
 make/../src/PAL/include/PAL/Path.hpp:
 make/../src/PAL/include/PAL/StringOp.hpp:
+make/../src/PAL/include/PAL/DynamicLoading.hpp:
 make/../src/QnnTypeMacros.hpp:

@@ -1,0 +1,21 @@
+{
+  "bytes": 1605632,
+  "conversion": "device-exported hnnx::s16_from_hf_rnd_sat<13>",
+  "device_payload": "qwen_block_custom_qnn/device_output/device_q13_conversion_probe/Result_0/weight_q13_native.raw",
+  "dtype": "int16",
+  "elements": 802816,
+  "fractional_bits": 13,
+  "maximum": 32767,
+  "minimum": -32768,
+  "output_member": "onnx__MatMul_230_q13.raw",
+  "saturated_max": 1058,
+  "saturated_min": 1181,
+  "scale": 0.0001220703125,
+  "sha256": "b838c624526c30de48b0a8a3fe3c853b8a570e6d3a47e167302498f3868fc38e",
+  "shape": [
+    896,
+    896
+  ],
+  "source_member": "onnx__MatMul_230.raw",
+  "source_member_in_output": false
+}

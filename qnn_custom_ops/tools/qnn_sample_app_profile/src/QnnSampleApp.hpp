@@ -49,7 +49,9 @@ class QnnSampleApp {
                std::string saveBinaryName              = "",
                unsigned int numInferences              = 1,
                bool serializeProfileLogs               = false,
-               std::string dlcPath                     = "");
+               std::string dlcPath                     = "",
+               bool persistentDecodePast128            = false,
+               bool persistentSharedBuffer             = false);
 
   ~QnnSampleApp();
 
@@ -68,6 +70,7 @@ class QnnSampleApp {
   StatusCode finalizeGraphs();
 
   StatusCode executeGraphs();
+  StatusCode executePersistentDecodePast128();
 
   StatusCode registerOpPackages();
 
@@ -141,6 +144,7 @@ class QnnSampleApp {
   QnnSystemProfile_SerializationTargetHandle_t m_serializationTargetHandle = nullptr;
 
   std::string m_dlcPath;
+  bool m_persistentDecodePast128 = false;
   QnnSystemDlc_Handle_t m_dlcHandle = nullptr;
   Qnn_LogHandle_t m_dlcLogHandle = nullptr;
 };

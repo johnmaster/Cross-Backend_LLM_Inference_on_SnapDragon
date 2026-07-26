@@ -20,6 +20,9 @@
 #include "QnnTypes.h"
 #include "QnnWrapperUtils.hpp"
 
+#define RPCMEM_HEAP_ID_SYSTEM 25
+#define RPCMEM_DEFAULT_FLAGS 1
+
 namespace qnn {
 namespace tools {
 namespace iotensor {
@@ -35,6 +38,12 @@ using PopulateInputTensorsRetType_t = std::tuple<StatusCode, size_t, size_t>;
 
 class IOTensor {
  public:
+  IOTensor() = default;
+  IOTensor(QNN_INTERFACE_VER_TYPE *qnnInterface, bool sharedBuffers);
+  ~IOTensor();
+
+  StatusCode getContextInfo(Qnn_ContextHandle_t *context);
+  void *getTensorBuffer(Qnn_Tensor_t *tensor);
   StatusCode setupInputAndOutputTensors(Qnn_Tensor_t **inputs,
                                         Qnn_Tensor_t **outputs,
                                         qnn_wrapper_api::GraphInfo_t graphInfo);
@@ -72,6 +81,19 @@ class IOTensor {
                                            size_t numOutputTensors);
 
  private:
+  using RpcMemAllocFn_t = void *(*)(int, uint32_t, int);
+  using RpcMemFreeFn_t = void (*)(void *);
+  using RpcMemToFdFn_t = int (*)(void *);
+
+  bool m_useSharedBuffer = false;
+  QNN_INTERFACE_VER_TYPE *m_qnnInterface = nullptr;
+  Qnn_ContextHandle_t *m_context = nullptr;
+  void *m_libCdspRpc = nullptr;
+  RpcMemAllocFn_t m_rpcMemAlloc = nullptr;
+  RpcMemFreeFn_t m_rpcMemFree = nullptr;
+  RpcMemToFdFn_t m_rpcMemToFd = nullptr;
+  std::unordered_map<uint32_t, void *> m_tensorToRpcMem;
+
   PopulateInputTensorsRetType_t populateInputTensor(const std::vector<std::string> &filePaths,
                                                     const size_t filePathsIndexOffset,
                                                     const bool loopBackToStart,

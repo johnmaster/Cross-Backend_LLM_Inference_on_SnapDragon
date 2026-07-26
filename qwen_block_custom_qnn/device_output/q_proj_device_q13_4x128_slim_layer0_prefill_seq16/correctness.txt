@@ -1,0 +1,4 @@
+slim 4x128 device-Q13 vs non-slim 4x128 device-Q13:
+hidden_out.raw    max_abs=0 mean_abs=0 array_equal=True
+present_key.raw   max_abs=0 mean_abs=0 array_equal=True
+present_value.raw max_abs=0 mean_abs=0 array_equal=True

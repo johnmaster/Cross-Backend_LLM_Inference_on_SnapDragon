@@ -118,6 +118,9 @@ void showHelp() {
       << "  --num_inferences    <VAL>       Specifies the number of inferences.\n"
          "                                  Loops over the input_list until the number of "
          "inferences has transpired.\n"
+      << "  --persistent_decode_past128     Reuse one tensor set and maintain a sliding\n"
+         "                                  past128 KV cache in host memory.\n"
+      << "  --persistent_shared_buffer      Bind persistent tensors through rpcmem/memRegister.\n"
 #ifdef QNN_ENABLE_DEBUG
       << "  --log_level                     Specifies max logging level to be set.  Valid "
          "settings: \n"
@@ -172,7 +175,9 @@ std::unique_ptr<sample_app::QnnSampleApp> processCommandLine(int argc,
     OPT_SYSTEM_LIBRARY    = 14,
     OPT_NUM_INFERENCES    = 15,
     OPT_PROFILE_SERIALIZE = 16,
-    OPT_DLC_PATH          = 17
+    OPT_DLC_PATH          = 17,
+    OPT_PERSISTENT_DECODE = 18,
+    OPT_PERSISTENT_SHARED = 19
   };
 
   // Create the command line options
@@ -194,6 +199,8 @@ std::unique_ptr<sample_app::QnnSampleApp> processCommandLine(int argc,
       {"num_inferences", pal::required_argument, NULL, OPT_NUM_INFERENCES},
       {"system_library", pal::required_argument, NULL, OPT_SYSTEM_LIBRARY},
       {"dlc_path", pal::required_argument, NULL, OPT_DLC_PATH},
+      {"persistent_decode_past128", pal::no_argument, NULL, OPT_PERSISTENT_DECODE},
+      {"persistent_shared_buffer", pal::no_argument, NULL, OPT_PERSISTENT_SHARED},
       {"version", pal::no_argument, NULL, OPT_VERSION},
       {NULL, 0, NULL, 0}};
 
@@ -217,6 +224,8 @@ std::unique_ptr<sample_app::QnnSampleApp> processCommandLine(int argc,
   unsigned int numInferences = 1;
   bool serializeProfileLogs  = false;
   std::string dlcPath;
+  bool persistentDecodePast128 = false;
+  bool persistentSharedBuffer = false;
   while ((opt = pal::getOptLongOnly(argc, argv, "", s_longOptions, &longIndex)) != -1) {
     switch (opt) {
       case OPT_HELP:
@@ -328,6 +337,14 @@ std::unique_ptr<sample_app::QnnSampleApp> processCommandLine(int argc,
         }
         break;
 
+      case OPT_PERSISTENT_DECODE:
+        persistentDecodePast128 = true;
+        break;
+
+      case OPT_PERSISTENT_SHARED:
+        persistentSharedBuffer = true;
+        break;
+
       default:
         std::cerr << "ERROR: Invalid argument passed: " << argv[pal::g_optInd - 1]
                   << "\nPlease check the Arguments section in the description below.\n";
@@ -428,7 +445,9 @@ std::unique_ptr<sample_app::QnnSampleApp> processCommandLine(int argc,
                                                                              saveBinaryName,
                                                                              numInferences,
                                                                              serializeProfileLogs,
-                                                                             dlcPath));
+                                                                             dlcPath,
+                                                                             persistentDecodePast128,
+                                                                             persistentSharedBuffer));
   return app;
 }
 

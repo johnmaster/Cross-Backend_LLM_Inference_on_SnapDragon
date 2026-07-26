@@ -1,0 +1,1 @@
+weight_fp32:=/data/local/tmp/qnn/qwen_block_custom_qnn/input/q_proj_weight_fp32.raw

@@ -22,11 +22,24 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--qnn-decode-layout",
+        action="store_true",
+        help="convert converter-exposed present_key NHWC raw output to ONNX NCHW",
+    )
     args = parser.parse_args()
 
     for name in ["hidden_out.raw", "present_key.raw", "present_value.raw"]:
         expected = np.fromfile(args.reference / name, dtype=np.float32)
         actual = np.fromfile(args.output / name, dtype=np.float32)
+        if args.qnn_decode_layout and name == "present_key.raw":
+            sequence = expected.size // (2 * 64)
+            actual = (
+                actual.reshape(1, sequence, 64, 2)
+                .transpose(0, 3, 1, 2)
+                .copy()
+                .reshape(-1)
+            )
         if expected.shape != actual.shape:
             raise SystemExit(f"{name}: shape mismatch {expected.shape} vs {actual.shape}")
         diff = np.abs(expected - actual)

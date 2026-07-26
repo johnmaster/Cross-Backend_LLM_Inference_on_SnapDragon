@@ -1,0 +1,10 @@
+root_cycles        3114247
+qnn_accel_us       10325
+qnn_us             13080
+netrun_us          13105
+q_proj_rhs_cast_cycles 0
+q_proj_cycles      582392
+q_proj_bias_add_cycles 253033
+gate_proj_cycles   191057
+up_proj_cycles     337576
+down_proj_cycles   374366

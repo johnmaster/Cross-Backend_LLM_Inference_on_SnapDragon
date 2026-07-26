@@ -20,10 +20,57 @@
 #include "PAL/Path.hpp"
 #endif
 #include "PAL/StringOp.hpp"
+#include "PAL/DynamicLoading.hpp"
+#include "QnnMem.h"
 #include "QnnTypeMacros.hpp"
 
 using namespace qnn;
 using namespace qnn::tools;
+
+iotensor::IOTensor::IOTensor(QNN_INTERFACE_VER_TYPE* qnnInterface,
+                             bool sharedBuffers)
+    : m_useSharedBuffer(sharedBuffers), m_qnnInterface(qnnInterface) {
+  if (!m_useSharedBuffer) {
+    return;
+  }
+  m_libCdspRpc = pal::dynamicloading::dlOpen(
+      "libcdsprpc.so",
+      pal::dynamicloading::DL_NOW | pal::dynamicloading::DL_LOCAL);
+  if (m_libCdspRpc == nullptr) {
+    QNN_ERROR("Unable to load libcdsprpc.so: %s",
+              pal::dynamicloading::dlError());
+    return;
+  }
+  m_rpcMemAlloc = reinterpret_cast<RpcMemAllocFn_t>(
+      pal::dynamicloading::dlSym(m_libCdspRpc, "rpcmem_alloc"));
+  m_rpcMemFree = reinterpret_cast<RpcMemFreeFn_t>(
+      pal::dynamicloading::dlSym(m_libCdspRpc, "rpcmem_free"));
+  m_rpcMemToFd = reinterpret_cast<RpcMemToFdFn_t>(
+      pal::dynamicloading::dlSym(m_libCdspRpc, "rpcmem_to_fd"));
+}
+
+iotensor::IOTensor::~IOTensor() {
+  if (m_libCdspRpc != nullptr) {
+    pal::dynamicloading::dlClose(m_libCdspRpc);
+  }
+}
+
+iotensor::StatusCode iotensor::IOTensor::getContextInfo(
+    Qnn_ContextHandle_t* context) {
+  m_context = context;
+  return StatusCode::SUCCESS;
+}
+
+void* iotensor::IOTensor::getTensorBuffer(Qnn_Tensor_t* tensor) {
+  if (tensor == nullptr) {
+    return nullptr;
+  }
+  if (QNN_TENSOR_GET_MEM_TYPE(tensor) == QNN_TENSORMEMTYPE_RAW) {
+    return QNN_TENSOR_GET_CLIENT_BUF(tensor).data;
+  }
+  const auto found = m_tensorToRpcMem.find(QNN_TENSOR_GET_ID(tensor));
+  return found == m_tensorToRpcMem.end() ? nullptr : found->second;
+}
 
 // Helper method to read data from files to a buffer.
 iotensor::PopulateInputTensorsRetType_t iotensor::IOTensor::readDataAndAllocateBuffer(
@@ -241,7 +288,7 @@ iotensor::PopulateInputTensorsRetType_t iotensor::IOTensor::populateInputTensor(
                                 loopBackToStart,
                                 dims,
                                 QNN_TENSOR_GET_DATA_TYPE(input),
-                                static_cast<uint8_t*>(QNN_TENSOR_GET_CLIENT_BUF(input).data));
+                                static_cast<uint8_t*>(getTensorBuffer(input)));
     if (datautil::StatusCode::SUCCESS != status) {
       QNN_ERROR("Failure in datautil::readBatchData");
       returnStatus = StatusCode::FAILURE;
@@ -389,9 +436,52 @@ iotensor::StatusCode iotensor::IOTensor::setupTensors(Qnn_Tensor_t** tensors,
                ? StatusCode::SUCCESS
                : StatusCode::FAILURE);
     }
-    if (StatusCode::SUCCESS == returnStatus) {
+    if (StatusCode::SUCCESS == returnStatus && !m_useSharedBuffer) {
       QNN_DEBUG("deepCopyQnnTensorInfo successful");
       QNN_TENSOR_SET_MEM_TYPE(((*tensors) + tensorIdx), QNN_TENSORMEMTYPE_RAW);
+    }
+    if (m_useSharedBuffer) {
+      if (m_qnnInterface == nullptr || m_context == nullptr ||
+          m_rpcMemAlloc == nullptr || m_rpcMemFree == nullptr ||
+          m_rpcMemToFd == nullptr) {
+        QNN_ERROR("Shared-buffer infrastructure is not initialized.");
+        return StatusCode::FAILURE;
+      }
+      Qnn_Tensor_t* tensor = (*tensors) + tensorIdx;
+      datautil::StatusCode lengthStatus{datautil::StatusCode::SUCCESS};
+      size_t length = 0;
+      std::tie(lengthStatus, length) =
+          datautil::calculateLength(dims, QNN_TENSOR_GET_DATA_TYPE(tensor));
+      if (lengthStatus != datautil::StatusCode::SUCCESS) {
+        return StatusCode::FAILURE;
+      }
+      void* pointer = m_rpcMemAlloc(
+          RPCMEM_HEAP_ID_SYSTEM, RPCMEM_DEFAULT_FLAGS, static_cast<int>(length));
+      const int fd = pointer == nullptr ? -1 : m_rpcMemToFd(pointer);
+      if (pointer == nullptr || fd < 0) {
+        QNN_ERROR("rpcmem allocation/fd conversion failed.");
+        return StatusCode::FAILURE;
+      }
+      Qnn_MemDescriptor_t descriptor = {
+          {QNN_TENSOR_GET_RANK(tensor),
+           QNN_TENSOR_GET_DIMENSIONS(tensor),
+           nullptr},
+          QNN_TENSOR_GET_DATA_TYPE(tensor),
+          QNN_MEM_TYPE_ION,
+          {{-1}}};
+      descriptor.ionInfo.fd = fd;
+      Qnn_MemHandle_t handle = nullptr;
+      const Qnn_ErrorHandle_t status =
+          m_qnnInterface->memRegister(*m_context, &descriptor, 1, &handle);
+      if (status != QNN_SUCCESS) {
+        QNN_ERROR("memRegister failed: %d", status);
+        m_rpcMemFree(pointer);
+        return StatusCode::FAILURE;
+      }
+      QNN_TENSOR_SET_MEM_TYPE(tensor, QNN_TENSORMEMTYPE_MEMHANDLE);
+      QNN_TENSOR_SET_MEM_HANDLE(tensor, handle);
+      m_tensorToRpcMem.emplace(QNN_TENSOR_GET_ID(tensor), pointer);
+      continue;
     }
     Qnn_ClientBuffer_t clientBuffer = QNN_CLIENT_BUFFER_INIT;
     returnStatus = allocateBuffer(reinterpret_cast<uint8_t**>(&clientBuffer.data),
@@ -467,7 +557,15 @@ iotensor::StatusCode iotensor::IOTensor::tearDownTensors(Qnn_Tensor_t* tensors,
       free(QNN_TENSOR_GET_DIMENSIONS(tensors[tensorIdx]));
       QNN_TENSOR_SET_DIMENSIONS(tensors[tensorIdx], nullptr);
     }
-    if (nullptr != QNN_TENSOR_GET_CLIENT_BUF(tensors[tensorIdx]).data) {
+    auto shared = m_tensorToRpcMem.find(QNN_TENSOR_GET_ID(tensors[tensorIdx]));
+    if (shared != m_tensorToRpcMem.end()) {
+      Qnn_MemHandle_t handle = QNN_TENSOR_GET_MEM_HANDLE(tensors[tensorIdx]);
+      if (m_qnnInterface->memDeRegister(&handle, 1) != QNN_SUCCESS) {
+        QNN_WARN("memDeRegister failed.");
+      }
+      m_rpcMemFree(shared->second);
+      m_tensorToRpcMem.erase(shared);
+    } else if (nullptr != QNN_TENSOR_GET_CLIENT_BUF(tensors[tensorIdx]).data) {
       QNN_DEBUG("freeing clientBuf.data");
       free(QNN_TENSOR_GET_CLIENT_BUF(tensors[tensorIdx]).data);
     }
@@ -784,7 +882,7 @@ iotensor::StatusCode iotensor::IOTensor::writeOutputTensor(Qnn_Tensor_t* output,
   auto returnStatus = StatusCode::SUCCESS;
   std::vector<size_t> dims;
   fillDims(dims, QNN_TENSOR_GET_DIMENSIONS(output), QNN_TENSOR_GET_RANK(output));
-  uint8_t* bufferToWrite = reinterpret_cast<uint8_t*>(QNN_TENSOR_GET_CLIENT_BUF(output).data);
+  uint8_t* bufferToWrite = reinterpret_cast<uint8_t*>(getTensorBuffer(output));
   if (datautil::StatusCode::SUCCESS !=
       datautil::writeBatchDataToFile(outputPaths,
                                      fileName,

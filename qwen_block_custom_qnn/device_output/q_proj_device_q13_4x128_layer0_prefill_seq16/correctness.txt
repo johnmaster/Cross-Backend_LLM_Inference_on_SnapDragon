@@ -1,0 +1,8 @@
+hidden_out.raw    shape=(14336,)   max_abs=1.83071047e-02 mean_abs=1.19500572e-03 cosine=0.999998629
+present_key.raw   shape=(2048,)    max_abs=6.74743652e-02 mean_abs=3.93668935e-03 cosine=0.999999881
+present_value.raw shape=(2048,)    max_abs=8.48025084e-05 mean_abs=7.87456520e-06 cosine=1.000000000
+
+4x128 device-Q13 vs 4x64 device-Q13:
+hidden_out.raw    max_abs=0 mean_abs=0 array_equal=True
+present_key.raw   max_abs=0 mean_abs=0 array_equal=True
+present_value.raw max_abs=0 mean_abs=0 array_equal=True
