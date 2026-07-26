@@ -632,3 +632,152 @@ device_output/nchw_value_cache_ab100/
 device_output/nchw_value_cache_profile/
 device_output/old_value_cache_profile_same_window/
 ```
+## 独立 Qwen GQA FlashAttention OpPackage（当前未采用）
+
+新增独立目录：
+
+```text
+qnn_custom_ops/qwen_flash_attention_hvx/
+```
+
+与旧固定 past128 fused experiment 不同，新 op 支持动态 KV/Q length、Qwen
+`14Q/2KV` grouped-query 映射、32-token blockwise online softmax 和 causal
+query boundary，并直接接受正式 graph 的 K-NHWC/V-NCHW 边界。
+
+主机 NumPy blockwise reference 对物化 attention：
+
+```text
+max_abs_error=2.60770321e-08
+cosine=1.00000012
+```
+
+第一次 rank-5 QHPI `Flat4` graph 在 finalize 返回 `1002`；将连续等价的
+`[1,2,7,1,64]` 改成 `[1,14,1,64]` rank 4 后成功执行。
+
+真机 past128、10 次 detailed profiling 去 warmup 中位数：
+
+```text
+root_cycles=19,508,660
+qnn_accel_us=21,213
+qnn_us=23,283
+netrun_us=23,338
+_QwenGqaFlashAttention≈17.5M cycles
+```
+
+与正式 grouped-GQA delta-KV 输出比较：
+
+```text
+hidden max_abs=0.0625
+hidden mean_abs=0.00815392
+hidden cosine=0.999947424
+current K/V=逐 bit相同
+```
+
+结论：graph 中原 QK/Softmax/AV 已被真正删除，但标量 FP32 kernel 仍比正式
+`10907 us` baseline 慢 `113.97%`，且误差未达门槛，因此不采用。后续只在完成
+HVX QK dot/reduction 与准确的 HVX AV 累加后复测。
+
+## 2026-07-26：独立 FlashAttention 的 HVX IEEE-FP AV（未采用）
+
+反汇编确认独立动态 KV kernel 的 QK/AV 均为标量 `sfmpy`。本轮将 64 维
+value accumulator 的缩放、加权累加和最终归一化改为两个 128-byte HVX
+FP32 vector。v75 首次构建失败：
+
+```text
+Attempting to emit V6_vmpy_sf_sf instruction but
+Feature_UseHVXIEEEFP predicate(s) are not met
+```
+
+在 OpPackage v75 flags 增加 `-mhvx-ieee-fp` 后，ARM/HTP package 构建成功，
+真实 past128 graph 完成 10 次执行。
+
+去 warmup 中位数：
+
+```text
+fused cycles: 17,618,383 -> 11,371,942 (-35.45%)
+root cycles:  19,508,660 -> 13,165,785 (-32.51%)
+NetRun:           23,338 ->     19,234 us (-17.59%)
+```
+
+正确性：
+
+```text
+hidden max_abs=0.22265625
+hidden mean_abs=0.00644305
+hidden cosine=0.999941244
+current K/V=逐 bit相同
+```
+
+v75 此路径使用分离的 vector multiply/add，不能保持原标量 fused multiply-add
+的逐 token 舍入行为。性能改善真实存在，但仍比正式 builtin `10907 us` 慢
+`76.34%`，最大误差也未通过门槛，因此不采用为正式 graph。源码和结果保留在：
+
+```text
+qnn_custom_ops/qwen_flash_attention_hvx/
+qnn_custom_ops/qwen_flash_attention_hvx/device_output/past128_hvx_av/
+```
+
+下一步先改 K cache 为 head-contiguous layout，再做 HVX QK dot/reduction；
+不在当前 head-interleaved K 上引入高成本 gather。
+
+## 2026-07-26：head-contiguous K + HVX QK（实验保留）
+
+将 past K boundary 从 `[1,128,64,2]` 改为 `[1,2,128,64]`，删除 current K
+到 NHWC 的 Transpose，并沿 token axis 2 拼接。QK 的 64 次 FP32 multiply 使用
+两个 128-byte HVX vector；v75 缺少直接 FP32 horizontal reduction，乘积写入
+对齐局部数组后标量求和。AV 的两个 accumulator vector 改为跨 token 寄存器驻留。
+
+保存文件：
+
+```text
+qnn_custom_ops/qwen_flash_attention_hvx/tools/
+  patch_qwen_decode_head_contiguous.py
+qnn_custom_ops/qwen_flash_attention_hvx/scripts/
+  build_qwen_graph_head_contiguous.sh
+generated/qwen2_0_5b_layer0_decode_past128_flash_attention_head_contiguous.cpp
+tools/device_input_list_layer0_decode_past128_flash_head_contiguous.txt
+```
+
+10 次 detailed profiling、去 warmup 中位数：
+
+```text
+fused cycles: 11,371,942 ->   891,176 (-92.16%)
+root cycles:  13,165,785 -> 2,768,200
+QNN accel:        16,672 ->     8,910 us
+NetRun:           19,234 ->    11,403 us (-40.72%)
+```
+
+与正式 builtin：
+
+```text
+QNN accelerator: 8,910 vs 9,493 us，custom 快 6.14%
+NetRun:          11,403 vs 10,907 us，custom 慢 4.55%
+```
+
+输出与旧 HVX AV 版本逐 bit 相同：
+
+```text
+hidden max_abs=0.22265625
+hidden mean_abs=0.00644305
+hidden cosine=0.999941244
+current K/V=逐 bit相同
+```
+
+结论：head-contiguous K 是决定性优化，纯 accelerator 已超过 builtin；但端到端
+仍慢 `496 us`，AV 精度也未过门槛，所以只保留为实验 graph，正式 decode 仍使用
+builtin。
+
+QFloat32 AV 对照为 `11504 us`、max_abs `0.198242188`、mean_abs
+`0.00703363`，性能和平均误差退化，不采用。源码以
+`QWEN_FLASH_AV_QFLOAT` 开关保留，结果分别位于：
+
+```text
+qnn_custom_ops/qwen_flash_attention_hvx/device_output/
+  past128_head_contiguous_qk/
+  past128_head_contiguous_qfloat/
+  past128_head_contiguous_reg_av/
+```
+
+部署时还确认 QHPI `--op_packages` 必须使用
+`path:InterfaceProvider:CPU/HTP` 完整语法；省略 provider 会在 Context Creation
+阶段触发 package registration `4005/4007`。

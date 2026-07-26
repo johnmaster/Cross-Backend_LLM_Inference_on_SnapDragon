@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<OpDefCollection
+        PackageName="QwenFlashAttentionHvxOpPackage"
+        Domain="aisw"
+        Version="1.0"
+        UseQHPI="true">
+    <OpDefList>
+        <OpDef>
+            <Name>QwenGqaFlashAttentionFp32</Name>
+            <Description>
+                <Content>
+                    Fused grouped-query decode attention with tiled online
+                    softmax. Q is [B,14,Q,64], K uses the QNN graph
+                    boundary [B,KV,64,KVH], V is [B,KVH,KV,64], and
+                    output has the same shape as Q.
+                </Content>
+            </Description>
+            <Input>
+                <Name>query</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, query_heads, query_length, head_dim]</Text>
+                </Shape>
+            </Input>
+            <Input>
+                <Name>key</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, kv_length, head_dim, kv_heads]</Text>
+                </Shape>
+            </Input>
+            <Input>
+                <Name>value</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, kv_heads, kv_length, head_dim]</Text>
+                </Shape>
+            </Input>
+            <Output>
+                <Name>output</Name>
+                <Mandatory>true</Mandatory>
+                <Datatype>BACKEND_SPECIFIC</Datatype>
+                <Shape>
+                    <Rank>4D</Rank>
+                    <Text>[batch, query_heads, query_length, head_dim]</Text>
+                </Shape>
+            </Output>
+            <SupportedBackend>HTP</SupportedBackend>
+        </OpDef>
+    </OpDefList>
+    <SupplementalOpDefList Backend="HTP">
+        <SupportedOps>
+            <OpName>QwenGqaFlashAttentionFp32</OpName>
+        </SupportedOps>
+        <SupplementalOpDef>
+            <Name>QwenGqaFlashAttentionFp32</Name>
+            <Input><Name>query</Name><Datatype>QNN_DATATYPE_FLOAT_32</Datatype></Input>
+            <Input><Name>key</Name><Datatype>QNN_DATATYPE_FLOAT_32</Datatype></Input>
+            <Input><Name>value</Name><Datatype>QNN_DATATYPE_FLOAT_32</Datatype></Input>
+            <Output><Name>output</Name><Datatype>QNN_DATATYPE_FLOAT_32</Datatype></Output>
+        </SupplementalOpDef>
+    </SupplementalOpDefList>
+</OpDefCollection>

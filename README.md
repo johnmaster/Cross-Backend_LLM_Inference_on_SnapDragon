@@ -82,6 +82,7 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 │   └── ai-hub/                   # Qualcomm AI Hub 使用笔记
 ├── qnn_quantization/             # 11 个递进的 QNN 量化实验
 ├── qnn_custom_ops/               # standalone QNN/QHPI/HVX MatMul OpPackage 实验
+│   └── qwen_flash_attention_hvx/ # Qwen GQA blockwise online-softmax 实验
 ├── tiny_llm_block/               # 手写 Qwen-style block 和 QNN builtin baseline
 ├── tiny_llm_block_custom_matmul/ # tiny block projection custom-op 替换
 ├── qwen_block_custom_qnn/        # 真实 Qwen2.5-0.5B layer0 custom QNN 案例
@@ -305,7 +306,7 @@ step total median:         5037 us
 | fused-bias q_proj | 更慢且误差增大 | 外部 Add 删除没有转化为端到端收益 |
 | FP16 KV boundary | `10907 -> 11767 us` | Cast/native-I/O 成本超过带宽收益 |
 | qnn-net-run shared/input cache | 慢 `2.50%/3.55%` | 注册、同步或 bookkeeping |
-| custom fused decode attention | 最快仍 `19432 us` | 标量 FP32/softmax 远慢于 builtin |
+| custom fused decode attention | head-contiguous HVX QK+AV `11403 us` | accelerator 快于 builtin `6.14%`，但端到端仍慢 `4.55%` 且最大误差为 `0.22265625` |
 | NCHW value-cache boundary | persistent step 慢 `0.99%` | 下游 V Concat/layout rewrite 变差 |
 
 当前结论不是“所有 custom op 都更快”，而是：
@@ -420,3 +421,4 @@ QAIRT SDK、Hexagon SDK/Tools、Android NDK，并在设备上准备相应 QNN ru
 - [Tiny block custom MatMul](tiny_llm_block_custom_matmul/README.md)
 - [真实 Qwen2.5 block custom QNN](qwen_block_custom_qnn/README.md)
 - [真实 Qwen2.5 block 优化实验日志](qwen_block_custom_qnn/OPTIMIZATION_LOG.md)
+- [Qwen GQA FlashAttention QHPI/HTP](qnn_custom_ops/qwen_flash_attention_hvx/README.md)

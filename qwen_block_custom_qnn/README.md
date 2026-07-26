@@ -1904,6 +1904,26 @@ dot/reduction + 经验证的 HVX softmax + FP32 value FMA”后才值得复测�
 减少 QNN 节点数期待加速。正式 decode 仍采用 past128 grouped-GQA delta-KV
 builtin attention。
 
+后续已将该实验抽离为独立的动态 KV、GQA-aware、32-token blockwise
+online-softmax OpPackage，见
+[`qnn_custom_ops/qwen_flash_attention_hvx`](../qnn_custom_ops/qwen_flash_attention_hvx/README.md)。
+独立版本成功接回真实 graph，但当前标量 FP32 实现的 NetRun 仍为 `23338 us`，
+hidden cosine 为 `0.999947424`，因此同样未采用。
+
+独立版本随后复测了 HVX IEEE-FP AV：通过 `-mhvx-ieee-fp` 启用 v75 FP32
+vector 指令，将 64 维 value accumulator 改成两个 128-byte HVX vector。
+fused cycles 从 `17,618,383` 降至 `11,371,942`，root cycles 从
+`19,508,660` 降至 `13,165,785`，NetRun 从 `23338 us` 降至 `19234 us`。
+但 hidden 最大误差增至 `0.22265625`、cosine 为 `0.999941244`，而且仍比
+正式 builtin `10907 us` 慢 `76.34%`，因此只保留为可复现实验，不采用。
+详细构建错误、编译开关和 profile 见独立目录 README。
+
+继续把 K boundary 改为 head-contiguous `[1,2,129,64]` 并实现 HVX QK 后，
+fused attention 降至 `891176 cycles`，NetRun 降至 `11403 us`。其中 QNN
+accelerator 为 `8910 us`，已经比 builtin 的 `9493 us` 快 `6.14%`；但端到端
+仍比 builtin `10907 us` 慢 `496 us / 4.55%`，且 AV 最大误差仍为
+`0.22265625`。因此该布局和内核作为有效实验保留，尚不替换正式 decode graph。
+
 ### KV cache 优化 7（采用为 runner 基线）：持久化 tensor 与宿主滑动 KV cache
 
 相比继续调整失败的 fused attention，更有意义的下一步是模拟真实 autoregressive
