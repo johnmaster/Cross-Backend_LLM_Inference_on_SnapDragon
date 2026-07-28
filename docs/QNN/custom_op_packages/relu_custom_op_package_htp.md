@@ -1,4 +1,4 @@
-# QNN HTP Custom Relu Op Package 从生成到真机执行
+# QNN HTP Custom Relu Op Package
 
 本文记录在 QAIRT/QNN SDK 2.47 中实现一个 HTP 自定义 Relu 算子，并在 Snapdragon 8 Gen 3 手机的 HTP 上完成图准备、DSP 执行和结果校验的完整流程。
 
@@ -340,7 +340,7 @@ src/ops/Relu.cpp
   HTP implementation 注册、tensor 类型匹配、cost/flags 和 kernel
 ```
 
-对初学者而言，主要需要维护：
+自定义算子主要维护以下内容：
 
 ```text
 1. XML
@@ -712,7 +712,7 @@ QUint16CroutonTensor
 带 _TCM 后缀的 TCM 版本
 ```
 
-`Plain` 和 `Crouton` 表示不同内部 layout，`_TCM` 表示数据位于 TCM 相关存储中。要写高性能 HTP 算子，不能只考虑 QNN datatype，还要理解 HTP Prepare 最终为 node 选择的 layout 和 memory placement。
+`Plain` 和 `Crouton` 表示不同内部 layout，`_TCM` 表示数据位于 TCM 相关存储中。高性能 HTP 算子除 QNN datatype 外，还必须考虑 HTP Prepare 最终为 node 选择的 layout 和 memory placement。
 
 ### 8.11 `out_0.set_dims(in_0)` 属于哪个阶段
 
@@ -812,198 +812,12 @@ sequenceDiagram
     BE->>Prep: ReluOpPackageTerminate()
 ```
 
-具体 SDK 内部可能合并或延后某些初始化动作，但写 Op Package 时应掌握的逻辑层次就是：
+具体 SDK 内部可能合并或延后某些初始化动作，但 Op Package 涉及的逻辑层次如下：
 
 ```text
 ABI 函数表 -> Package 信息/校验 -> HTP Core implementation 注册
 -> Prepare 匹配与编译 -> graphExecute 调 kernel
 ```
-
-### 8.14 自己写一个新 HTP Op 的标准步骤
-
-假设以后写 `MyScale`，不要从 `reluImpl()` 直接开写。建议按下面顺序：
-
-#### 第一步：先写算子契约
-
-明确：
-
-```text
-PackageName
-Op Name
-输入数量、名称、datatype、rank
-输出数量、名称、datatype、rank
-参数名称、类型、是否 mandatory、默认值
-输出 shape 如何由输入和参数决定
-支持 FLOAT32、FP16 还是量化类型
-```
-
-把这些写进 XML，再运行 generator。
-
-#### 第二步：检查生成的 Interface
-
-重点检查：
-
-```text
-sg_packageName
-sg_opNames
-ValidateOpConfig 中 inputs/outputs/params 数量
-InterfaceProvider 导出名
-```
-
-#### 第三步：定义 kernel signature
-
-例如一个单输入、单输出、一个 scalar scale 的概念签名：
-
-```cpp
-template <typename TensorType, typename ScaleType>
-GraphStatus myScaleImpl(TensorType& out,
-                        const TensorType& in,
-                        const ScaleType& scale);
-```
-
-实际参数是 Tensor 还是 scalar wrapper，应以 HTP API 和 generator 生成的参数形式为准。
-
-#### 第四步：为每种真实支持的类型注册 implementation
-
-```cpp
-DEF_PACKAGE_OP_AND_COST_AND_FLAGS(
-    (myScaleImpl<PlainFloatTensor, PlainFloatTensor>),
-    "MyScale",
-    SNAIL,
-    Flags::RESOURCE_HVX)
-```
-
-不要只在 XML 中声明 datatype，却没有对应 C++ implementation。
-
-#### 第五步：实现正确性版本
-
-先写：
-
-- 清晰、可验证的标量循环。
-- 正确的 shape 设置。
-- 输入参数检查。
-- 明确的错误返回。
-- 小尺寸输入输出测试。
-
-执行函数中避免：
-
-```text
-malloc/free
-new/delete
-默认 allocator 的 std::vector 扩容
-每次 execute 构造大容器
-不可控的锁和系统调用
-```
-
-#### 第六步：建立最小测试 Graph
-
-Graph 只保留：
-
-```text
-一个输入 -> 一个自定义 node -> 一个输出
-```
-
-用 NumPy 计算 reference，先证明：
-
-```text
-加载成功
-Validate 成功
-Finalize 成功
-Execute 成功
-数值匹配
-```
-
-#### 第七步：再扩展类型和性能
-
-按顺序增加：
-
-```text
-更多 shape
-更多 datatype
-量化支持
-Crouton/TCM implementation
-HVX 向量化
-cost function
-optimization rules
-profiling
-```
-
-一次只增加一个维度，否则很难判断失败发生在 ABI、Prepare、layout、kernel 还是数值层。
-
-### 8.15 一个可复用的 HTP Op 源码骨架
-
-```cpp
-#include "HTP/core/constraints.h"
-#include "HTP/core/op_package_feature_support.h"
-#include "HTP/core/op_register_ext.h"
-#include "HTP/core/optimize.h"
-#include "HTP/core/simple_reg.h"
-#include "QnnOpPackage.h"
-
-BEGIN_PKG_OP_DEFINITION(PKG_MyOp);
-
-template <typename TensorType>
-GraphStatus myOpImpl(TensorType& out,
-                     const TensorType& in);
-
-DEF_PACKAGE_OP_AND_COST_AND_FLAGS(
-    (myOpImpl<PlainFloatTensor>),
-    "MyOp",
-    SNAIL,
-    Flags::RESOURCE_HVX)
-
-template <typename TensorType>
-GraphStatus myOpImpl(TensorType& out,
-                     const TensorType& in) {
-  out.set_dims(in);
-
-  for (Idx b = 0; b < in.dim(0); ++b) {
-    for (Idx h = 0; h < in.dim(1); ++h) {
-      for (Idx w = 0; w < in.dim(2); ++w) {
-        for (Idx d = 0; d < in.dim(3); ++d) {
-          // Replace with the real operator formula.
-          out(b, h, w, d) = in(b, h, w, d);
-        }
-      }
-    }
-  }
-
-  return GraphStatus::Success;
-}
-
-END_PKG_OP_DEFINITION(PKG_MyOp);
-```
-
-这个骨架只适合开始学习，不等于高性能实现。写新 Op 时必须同步修改 XML、Package 名、Op 名、参数和 validation，不能只替换函数体。
-
-### 8.16 阅读当前工程时的推荐顺序
-
-为了真正掌握而不是只看到大量宏，建议按下面顺序逐行阅读：
-
-```text
-1. config/ReluOpPackageHtp.xml
-   先回答：这个 Op 对外承诺什么？
-
-2. model/custom_relu_htp_model.cpp
-   再回答：Graph 如何引用 Package 和 Op？tensor 是什么 shape/type？
-
-3. src/ReluOpPackageInterface.cpp
-   再回答：动态库如何暴露 ABI？如何校验 node？
-
-4. src/ops/Relu.cpp 中的 DEF_PACKAGE_OP...
-   再回答：哪些 tensor 类型会匹配哪个 implementation？
-
-5. reluImpl()
-   最后回答：每个输出元素究竟怎样计算？
-
-6. Makefile
-   理解同一源代码如何生成 ARM64 Prepare 库和 Hexagon Execute 库。
-
-7. qnn-sample-app 日志
-   把每条日志对应回上述函数和阶段。
-```
-
-这样阅读时，宏不再是一片黑盒，而是分别落在“接口、注册、Prepare、执行”四个明确阶段。
 
 ## 9. 编译 Hexagon v75 执行库
 
@@ -1517,7 +1331,7 @@ ELF shared object, 32-bit LSB hexagon, bad note 22 size?
 
 ## 19. 当前实现的边界
 
-本实验已经验证 HTP 自定义算子的完整工程链路，但它仍是学习用 reference kernel：
+本实验已经验证 HTP 自定义算子的完整工程链路，但当前实现仍是未做性能优化的 reference kernel：
 
 - 只实际验证了 `QNN_DATATYPE_FLOAT_32`。
 - XML 虽声明 UFIXED8/UFIXED16，当前 `fmaxf` 实现没有完成量化类型适配。
@@ -1526,12 +1340,12 @@ ELF shared object, 32-bit LSB hexagon, bad note 22 size?
 - `reluCostFunc()` 尚未用于真实 cost 评估。
 - 尚未加入 shape validation、量化参数校验和更完整的错误返回。
 
-下一阶段可以依次学习：
+后续实现项：
 
 1. 为不同数据类型注册不同的 HTP implementation。
 2. 增加约束和 shape/type validation。
 3. 实现 HVX 向量化 Relu，并对比标量版本性能。
-4. 学习 `DEF_PACKAGE_OPTIMIZATION`，为 Graph Prepare 添加优化规则。
+4. 使用 `DEF_PACKAGE_OPTIMIZATION` 为 Graph Prepare 添加优化规则。
 5. 使用 profiling 验证自定义 node 的执行时间和调度资源。
 6. 构建包含多个自定义 node、参数和中间 tensor 的测试 Graph。
 

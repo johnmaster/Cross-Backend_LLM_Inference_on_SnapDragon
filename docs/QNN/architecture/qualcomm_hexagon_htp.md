@@ -1,8 +1,4 @@
-# Qualcomm Hexagon 与 HTP 架构导读
-
-本文从 QNN 开发者的视角解释 Qualcomm Hexagon、DSP、HTP、HVX、HMX、VTCM、CDSP、FastRPC 和 QNN 之间的关系，并将这些概念映射到 Android 真机推理和 HTP Custom Op Package。
-
-本文的重点不是芯片宣传参数，而是建立一套可以指导开发、调试和性能分析的分层模型。
+# Qualcomm Hexagon 与 HTP 架构
 
 ## 1. 最重要的结论
 
@@ -328,7 +324,7 @@ Scalar 单元适合：
 - 小规模标量运算。
 - 无法向量化的代码。
 
-当前学习版 Relu：
+当前标量 Relu 实现：
 
 ```cpp
 for (Idx b = 0; b < in.dim(0); ++b) {
@@ -444,7 +440,7 @@ QNN HTP 通常由 Graph Prepare 和 runtime 完成大部分规划；更底层的
 
 ### 7.2 VTCM 与 CUDA Shared Memory 的相似点
 
-如果熟悉 CUDA，可以使用这个近似类比：
+与 CUDA 的近似对应关系如下：
 
 ```text
 CUDA
@@ -835,7 +831,7 @@ GPU/HTP 当前负载
 
 ## 14. 与 NVIDIA CUDA 的对应关系
 
-这只是帮助理解的近似映射，不表示两套架构完全等价：
+以下仅为近似映射，不表示两套架构完全等价：
 
 | NVIDIA/CUDA | Qualcomm/QNN HTP |
 | --- | --- |
@@ -1053,19 +1049,19 @@ Graph ... execution finished with result 0
   HTP 执行完成
 ```
 
-## 20. 面向 Custom Op 的学习路线
+## 20. Custom Op 实现路线
 
 ### 阶段一：建立正确性
 
 ```text
-理解 QNN Graph/Tensor/Op
-理解 PackageName + TypeName
+确认 QNN Graph/Tensor/Op 关系
+确认 PackageName + TypeName
 写 FLOAT32 标量 kernel
 完成 ARM/Hexagon 双库编译
 真机执行并与 NumPy 对比
 ```
 
-### 阶段二：理解 HTP Tensor
+### 阶段二：HTP Tensor
 
 ```text
 PlainFloatTensor
@@ -1076,7 +1072,7 @@ interface scale/offset
 rank backfill
 ```
 
-### 阶段三：理解 Prepare
+### 阶段三：Graph Prepare
 
 ```text
 implementation matching

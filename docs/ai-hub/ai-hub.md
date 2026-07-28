@@ -1,21 +1,8 @@
-# Qualcomm AI Hub 学习记录
+# Qualcomm AI Hub
 
-本文记录当前在 Linux 主机上安装和使用 Qualcomm AI Hub 的过程，以及已经遇到的问题和解决方式。
+本文记录 Qualcomm AI Hub 在 Linux 主机上的安装、配置和使用过程，涵盖云端设备选择、MobileNet V2 基础流程，以及 Genie LLM 导出时遇到的问题。
 
-## 1. 当前目标
-
-当前阶段先不直接学习 QNN SDK，而是通过 Qualcomm AI Hub 熟悉 Snapdragon 设备上的模型 benchmark、profile、compile 和部署产物导出流程。
-
-学习路线：
-
-1. 安装 AI Hub 客户端。
-2. 配置 API token。
-3. 查看云端可用设备。
-4. 选择接近 OnePlus 12 / Snapdragon 8 Gen 3 的 proxy device。
-5. 先用官方小模型跑通 benchmark。
-6. 再逐步过渡到 QNN / HTP / NPU。
-
-## 2. Python 环境
+## 1. Python 环境
 
 建议使用单独的 conda 环境，避免和已有 PyTorch / boto / aiobotocore 环境冲突。
 
@@ -73,7 +60,7 @@ conda deactivate qai_hub
 ArgumentError: deactivate does not accept arguments
 ```
 
-## 3. 安装 AI Hub
+## 2. 安装 AI Hub
 
 在 `qai_hub` 环境中安装：
 
@@ -98,7 +85,7 @@ torchaudio requires torch==2.6.0
 
 这类提示说明当前 Python 环境里已有包版本和新安装包不完全兼容。`qai-hub` 本身可能已经安装成功，但为了避免污染已有环境，推荐使用独立的 `qai_hub` conda 环境。
 
-## 4. 配置 token
+## 3. 配置 API token
 
 已经拿到 Qualcomm AI Hub token 后，在本机配置：
 
@@ -117,7 +104,7 @@ qai-hub list-devices
 
 如果能列出设备，说明客户端安装和 token 配置成功。
 
-## 5. pip 代理问题
+## 4. pip 代理问题
 
 安装 `qai-hub-models` 时曾遇到：
 
@@ -198,7 +185,7 @@ proxy_on
 proxy_off
 ```
 
-## 6. 选择 AI Hub 目标设备
+## 5. 选择 AI Hub 目标设备
 
 当前本地设备：
 
@@ -243,7 +230,7 @@ AI Hub proxy: Samsung Galaxy S24 (Family) / Snapdragon 8 Gen 3 / Android 14
 CLI: --device "Samsung Galaxy S24 (Family)" --device-os 14
 ```
 
-## 7. 下一步：跑第一个模型
+## 6. 运行第一个模型
 
 当前已经安装成功：
 
@@ -252,9 +239,9 @@ qai-hub
 qai-hub-models
 ```
 
-建议第一个模型使用 MobileNet V2，因为它小、快、出错少，适合熟悉 AI Hub 流程。
+使用 MobileNet V2 验证 AI Hub 流程。该模型体积小、执行快，可以降低验证所需的时间和资源成本。
 
-先确认 demo 是否可用：
+确认 demo 是否可用：
 
 ```bash
 python -m qai_hub_models.models.mobilenet_v2.demo
@@ -276,20 +263,20 @@ python -m qai_hub_models.models.mobilenet_v2.export \
 
 如果参数不匹配，以 `--help` 输出为准。
 
-第一阶段目标不是追求复杂模型，而是跑通：
+该验证覆盖：
 
 ```text
 compile -> profile / benchmark -> download artifact
 ```
 
-跑通后，把 benchmark 结果记录到仓库中，例如：
+benchmark 结果保存到：
 
 ```text
 data/ai-hub/
 docs/ai-hub/
 ```
 
-## 8. MobileNet V2 TFLite Float 跑通记录
+## 7. MobileNet V2 TFLite Float 跑通记录
 
 当前已经使用 MobileNet V2 跑通 AI Hub 的完整流程：
 
@@ -356,9 +343,9 @@ mobilenet_v2.tflite
 
 - MobileNet V2 TFLite float 已经在 AI Hub hosted device 上成功编译、profile、推理并下载。
 - 虽然 target runtime 是 `tflite`，但在 Samsung Galaxy S24 Family 上，AI Hub 把 71 个 op 全部映射到了 NPU。
-- 这是后续学习 AI Hub / QNN / NPU benchmark 的第一个成功样例。
+- 该结果可作为后续 AI Hub、QNN 和 NPU benchmark 的基线。
 
-## 9. 导出文件说明
+## 8. 导出文件说明
 
 MobileNet V2 导出的三个主要文件作用如下。
 
@@ -404,7 +391,7 @@ cat /home/lingbok/export_assets/mobilenet_v2-s24-tflite-float/mobilenet_v2-tflit
 | `labels.txt` | 把分类 index 转成人类可读标签 |
 | `metadata.json` | 记录模型导出和部署相关元信息 |
 
-## 10. AI Hub 上传超时问题
+## 9. AI Hub 上传超时问题
 
 运行 MobileNet V2 export 时曾遇到上传模型到 AI Hub 失败：
 
@@ -450,7 +437,7 @@ curl -I https://tetrahub-qprod-userdata.s3-accelerate.amazonaws.com
 
 本次实际情况：第一次上传超时失败，第二次重跑后成功完成 upload、compile、profile、inference 和 download。
 
-## 11. 常用 AI Hub 命令速查
+## 10. 常用 AI Hub 命令速查
 
 这一节把两个常用入口分开记录：
 
@@ -645,7 +632,7 @@ qai-hub submit-link-job \
 
 - `qai-hub` 更偏底层，可以手动上传模型、提交 job。
 - `python -m qai_hub_models.models.<model>.export` 更偏官方模型一键流程，会自动完成上传、compile、profile、download 等步骤。
-- 对新手来说，先用 `qai-hub-models` 的 `export.py` 跑通官方模型，再逐步学习 `qai-hub submit-*` 更稳。
+- `qai-hub-models` 的 `export.py` 用于执行官方模型的完整自动化流程；`qai-hub submit-*` 用于手动控制各类 job。
 
 ### `qai-hub-models` 常用命令
 
@@ -896,14 +883,14 @@ HF_ENDPOINT=https://hf-mirror.com PYTHONUNBUFFERED=1 python -u -m qai_hub_models
   --output-dir ~/export_assets/qwen3_4b_instruct_2507-s24-genie-c512
 ```
 
-建议先用较小的 context：
+以下配置使用较小的 context：
 
 ```text
 context-length: 512
 sequence-length: 128,1
 ```
 
-这样可以降低导出和编译成本，适合先跑通端到端流程。
+该配置可以降低端到端导出和编译成本。
 
 ### 观察长时间运行的 export
 
@@ -993,7 +980,7 @@ PY
 - patch 后 export 可以继续进入 static assets 下载和 AI Hub 编译流程。
 - 如果后续 Qualcomm 发布新版 `qai-hub-models` 修复该问题，应优先升级官方版本。
 
-## 12. 租服务器尝试 Genie LLM 的记录和结论
+## 11. Genie LLM 云服务器实验记录
 
 本节记录一次在云服务器上尝试通过 `qai-hub-models` 导出 Genie LLM 的过程。结论是：当前网络和模型授权条件下，不适合继续烧服务器时间硬跑。
 
@@ -1213,51 +1200,3 @@ export ALL_PROXY=socks5h://127.0.0.1:10809
 export HTTPS_PROXY=socks5h://127.0.0.1:10809
 export HTTP_PROXY=socks5h://127.0.0.1:10809
 ```
-
-### 本次止损结论
-
-本次 Genie LLM 路线没有继续的原因不是单一错误，而是多个现实条件叠加：
-
-1. 官方 `qai-hub-models` 没有 Qwen2.5-3B 模块，无法直接和之前 GGUF 实验完全对齐。
-2. `qwen3_4b` / `qwen3_4b_instruct_2507` 在 `qai-hub-models 0.55.0` 中有 `info.yaml` release assets 校验问题，需要临时 patch。
-3. Qwen3-4B Instruct 2507 的 Qualcomm W4A16 static asset 约十几个 GB，服务器下载速度过慢。
-4. Llama 3.2 1B 更小，但 Hugging Face 模型是 gated repo，需要 Meta 授权和已登录 token。
-5. 按小时计费服务器不适合在外部下载链路不确定时长时间空跑。
-
-最终选择关停服务器止损是合理的。
-
-### 后续更稳的路线
-
-建议后续分两条线推进：
-
-1. 本地继续 QNN SDK / Genie 小模型路线：
-
-```text
-MobileNet V2 QNN context -> qnn-net-run -> qnn-throughput-net-run -> 自己写 QNN runner
-BGE Genie embedding -> 继续熟悉 Genie config / tokenizer / model.bin
-```
-
-这条路线不依赖大模型下载，也不需要高配云服务器。
-
-2. LLM Genie 等网络和授权准备好后再做：
-
-```text
-确认 Hugging Face token 和 gated model 授权
-确认 Qualcomm S3 下载速度可接受
-优先选择 1B 级别官方模型跑通
-再回到 Qwen / 3B / 4B 模型
-```
-
-下一次租服务器前，建议先做三项预检查：
-
-```bash
-qai-hub list-devices | grep -i "Samsung Galaxy S24"
-python -m qai_hub_models.models.llama_v3_2_1b_instruct.export --help
-python - <<'PY'
-from transformers import AutoConfig
-cfg = AutoConfig.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
-print(cfg.model_type)
-PY
-```
-
-如果第三条因为 gated repo 失败，先不要租高配服务器，应该先处理 Hugging Face 授权。

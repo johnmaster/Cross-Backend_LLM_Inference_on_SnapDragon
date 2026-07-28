@@ -312,10 +312,10 @@ QNN backend 执行时使用的是 memRegister 返回的 Qnn_MemHandle_t。
 | 是否调用 `memRegister` | 否 | 是 |
 | 是否调用 `memDeRegister` | 否 | 是 |
 | 依赖库 | 不依赖 `libcdsprpc.so` | 依赖 `libcdsprpc.so` |
-| 适合场景 | 简单、通用、容易理解 | HTP/DSP 等需要高效共享内存的路径 |
+| 适合场景 | 通用、集成成本较低 | HTP/DSP 等需要高效共享内存的路径 |
 | 对模型计算结果影响 | 不改变模型本身 | 不改变模型本身 |
 
-一句话理解：
+核心区别：
 
 ```text
 Shared buffer 改的是 input/output tensor 的内存交付方式，不改 graph、不改 operator、不改模型数学含义。
@@ -563,7 +563,7 @@ graphReleaseExecutionEnvironment
 
 所以 shared buffer 的基本路径是 `rpcmem + memRegister + MEMHANDLE tensor`；执行环境绑定是进一步优化，不是每次都一定出现。
 
-## 当前链路总结
+## 总结
 
 ```text
 mobilenet_v2.bin
@@ -595,7 +595,7 @@ output_shared_buffer
 最重要的理解点：
 
 ```text
-SampleAppSharedBuffer 学的是 QNN tensor I/O buffer 的内存注册与共享方式。
+SampleAppSharedBuffer 涵盖 QNN tensor I/O buffer 的内存注册与共享方式。
 它不是多 graph 示例，也不是自定义 op 示例。
-它的价值在于理解 HTP/DSP 场景下 input/output 如何通过 mem handle 交给 backend。
+它展示了 HTP/DSP 场景下 input/output 通过 mem handle 交给 backend 的过程。
 ```

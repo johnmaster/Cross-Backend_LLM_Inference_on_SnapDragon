@@ -449,7 +449,7 @@ output_sample_app/Result_0/class_logits.raw
 = graphExecute 之后写出的结果
 ```
 
-## 当前链路总结
+## 总结
 
 ```text
 mobilenet_v2.bin

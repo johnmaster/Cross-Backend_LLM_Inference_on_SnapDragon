@@ -9,14 +9,14 @@ Android 真机运行、正确性校验和 profiling 的工程闭环。
 
 1. `llama.cpp`：比较 Qwen2.5 GGUF 模型在 CPU 和 Adreno OpenCL GPU 上的
    prefill/decode 性能。
-2. QNN/HTP：学习量化，开发 custom MatMul OpPackage，在 tiny Transformer block
+2. QNN/HTP：验证量化方案，开发 custom MatMul OpPackage，在 tiny Transformer block
    中验证替换方法，最终迁移到真实 Qwen2.5-0.5B decoder layer。
 
 ```text
 llama.cpp CPU/OpenCL benchmark
                 |
                 v
-QNN quantization basics and converter experiments
+QNN quantization and converter experiments
                 |
                 v
 standalone QNN HTP custom MatMul
@@ -43,8 +43,8 @@ persistent runner -> rpcmem/memRegister shared cache
 |---|---|---|
 | CPU/OpenCL benchmark | 已完成 | CPU 更适合当前 decode；OpenCL 可改善部分模型的 prefill |
 | QNN 量化实验 01–11 | 已完成 | 覆盖 INT8、per-axis、QDQ、误差拆分、W8A16、校准和 W4FP16a |
-| 独立 HTP Custom MatMul | 已完成 | 从标量 reference 逐步发展到 QHPI/HVX 8-row、FP32 store、prepack 和 tile-cache |
-| Tiny Qwen-style block | 已完成 | prefill/decode ONNX、QNN builtin、设备正确性和 profiling 均已跑通 |
+| 独立 HTP Custom MatMul | 已完成 | 从标量 reference 迭代到 QHPI/HVX 8-row、FP32 store、prepack 和 tile-cache |
+| Tiny Qwen-style block | 已完成 | prefill/decode ONNX、QNN builtin、设备正确性和 profiling 均已验证 |
 | Tiny block custom q_proj | 已完成 | 成功 patch converter 生成的 QNN C++ 并加载外部 HTP OpPackage |
 | 真实 Qwen2.5 layer0 prefill | 已完成 | device-Q13 4x128 custom q_proj 保持逐 bit 输出，NetRun `13105 us`，比 builtin 快 `11.61%` |
 | 真实 Qwen2.5 layer0 decode | 已完成 | past16/32/64/128、grouped-GQA、host-managed delta KV 和正确性/profile 均已完成 |
@@ -76,9 +76,9 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 .
 ├── data/                         # llama.cpp CPU/GPU benchmark 原始日志与报告
 ├── docs/
-│   ├── analysis.md               # CPU 与 OpenCL benchmark 分析
-│   ├── oneplus12-llm-startup.md  # OnePlus 12 环境搭建和 profiling 记录
-│   ├── QNN_learning/             # QNN SDK、HTP 架构、SampleApp、Custom Op 笔记
+│   ├── llama.cpp/
+│   │   └── oneplus12-llm-startup.md  # OnePlus 12 环境搭建和 profiling 记录
+│   ├── QNN/                      # QNN SDK、HTP 架构、SampleApp、Custom Op 文档
 │   └── ai-hub/                   # Qualcomm AI Hub 使用笔记
 ├── qnn_quantization/             # 11 个递进的 QNN 量化实验
 ├── qnn_custom_ops/               # standalone QNN/QHPI/HVX MatMul OpPackage 实验
@@ -95,15 +95,15 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 
 ### 1. Snapdragon 上的 `llama.cpp`
 
-- [设备环境与启动记录](docs/oneplus12-llm-startup.md)
-- [CPU 与 OpenCL 结果分析](docs/analysis.md)
+- [设备环境与启动记录](docs/llama.cpp/oneplus12-llm-startup.md)
+- [CPU 与 OpenCL 结果分析](docs/llama.cpp/oneplus12-llm-startup.md#13-cpu-与-opencl-gpu-推理结果分析)
 - `data/cpu/`、`data/gpu/` 中的原始 benchmark 日志
 - `scripts/run_baseline.sh`、`run_quant_sweep.sh` 和
   `run_opencl_ngl_sweep.sh`
 
 ### 2. QNN 量化
 
-从 [qnn_quantization/README.md](qnn_quantization/README.md) 开始，按编号阅读：
+QNN 量化实验按编号组织：
 
 | 目录 | 主题 |
 |---|---|
@@ -121,9 +121,9 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 
 ### 3. HTP Custom MatMul
 
-[qnn_custom_ops/matmul/README.md](qnn_custom_ops/matmul/README.md) 从零记录普通 QNN
-HTP Custom OpPackage 的生成、编译、部署和验证。之后的 `matmul_qhpi_*` 目录按单一
-变量逐步演进：
+[qnn_custom_ops/matmul/README.md](qnn_custom_ops/matmul/README.md) 记录普通 QNN
+HTP Custom OpPackage 的生成、编译、部署和验证。之后的 `matmul_qhpi_*` 目录分别
+验证单一变量：
 
 ```text
 QHPI scalar reference
@@ -412,10 +412,10 @@ QAIRT SDK、Hexagon SDK/Tools、Android NDK，并在设备上准备相应 QNN ru
 
 ## 文档索引
 
-- [OnePlus 12 本地 LLM 环境搭建](docs/oneplus12-llm-startup.md)
-- [CPU 与 OpenCL benchmark 分析](docs/analysis.md)
-- [QNN 学习笔记](docs/QNN_learning/qnn-learning.md)
-- [Qualcomm HTP 架构笔记](docs/QNN_learning/architecture/qualcomm_hexagon_htp.md)
+- [OnePlus 12 本地 LLM 环境搭建](docs/llama.cpp/oneplus12-llm-startup.md)
+- [CPU 与 OpenCL benchmark 分析](docs/llama.cpp/oneplus12-llm-startup.md#13-cpu-与-opencl-gpu-推理结果分析)
+- [QNN SDK 本地安装与验证](docs/QNN/qnn-sdk.md)
+- [Qualcomm HTP 架构说明](docs/QNN/architecture/qualcomm_hexagon_htp.md)
 - [QNN 量化实验](qnn_quantization/README.md)
 - [Tiny Qwen-style block](tiny_llm_block/README.md)
 - [Tiny block custom MatMul](tiny_llm_block_custom_matmul/README.md)

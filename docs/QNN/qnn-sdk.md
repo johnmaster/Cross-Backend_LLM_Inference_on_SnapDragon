@@ -2,15 +2,15 @@
 
 本文记录在 Linux 主机和 OnePlus 12 手机上安装 Qualcomm QAIRT / QNN SDK 的过程，以及当前遇到的问题和解决方式。
 
-## 1. 当前目标
+## 1. 验证范围
 
-当前阶段的目标不是直接跑大语言模型，而是先确认手机本地 QNN 运行环境是否可用：
+本节确认手机本地 QNN 运行环境是否可用：
 
 1. 在 Linux 主机上解压 QAIRT / QNN SDK。
 2. 把 Android 端工具和运行库推到手机。
 3. 用 `qnn-platform-validator` 验证 GPU 后端。
 4. 用 `qnn-platform-validator` 验证 DSP / HTP 后端。
-5. 为后续 `qnn-net-run`、`qnn-throughput-net-run`、Genie LLM 部署做准备。
+5. 确认 `qnn-net-run`、`qnn-throughput-net-run` 和 Genie LLM 部署所需的基础环境。
 
 当前设备：
 
@@ -255,18 +255,18 @@ ls -l /data/local/tmp/qnn/lib/libQnnHtpV75CalculatorStub.so
 
 这说明 OnePlus 12 本地已经具备运行 QNN GPU 和 QNN DSP/HTP backend 的基础条件。
 
-## 10. 下一步
+## 10. MobileNet V2 验证流程
 
-建议下一步不要直接上 Qwen / LLM，而是先用 MobileNet V2 这样的小模型打通本地 QNN 执行链路：
+使用 MobileNet V2 验证本地 QNN 执行链路：
 
 1. 从 AI Hub 导出 QNN context binary 或 QNN DLC。
 2. 把模型产物、输入数据、QNN runtime 推到手机。
 3. 用 `qnn-net-run` 单次运行。
 4. 用 `qnn-throughput-net-run` 做 benchmark。
 5. 分别测试 GPU backend 和 DSP / HTP backend。
-6. 确认小模型本地 QNN 跑通后，再进入 Genie / LLM 路线。
+6. 验证 Genie / LLM 所需的运行环境。
 
-当前已经解决的是最关键的第一关：手机本地 QNN backend validation。
+手机本地 QNN backend validation 已完成。
 
 ## 11. MobileNet V2 throughput 脚本
 
@@ -528,7 +528,7 @@ Recommended memory (RAM + swap): 50 GB
 Recommended swap space: 20 GB
 ```
 
-当前决定：先不继续硬做 Llama / Qwen，先跑通更小的 Genie embedding 链路。
+受模型权限和内存需求限制，本次改用较小的 Genie embedding 模型验证执行链路。
 
 ### 13.3 下载 BGE 模型
 
