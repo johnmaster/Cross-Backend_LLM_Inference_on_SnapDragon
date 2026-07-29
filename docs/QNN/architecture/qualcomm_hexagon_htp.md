@@ -1112,10 +1112,10 @@ tile/block 策略
 architecture/qualcomm_hexagon_htp.md
   解释硬件、运行时和 QNN 分层
 
-custom_op_packages/relu_custom_op_package_cpu.md
+custom_op_packages/relu/cpu/README.md
   CPU Custom Op Package 完整实践
 
-custom_op_packages/relu_custom_op_package_htp.md
+custom_op_packages/relu/htp/README.md
   HTP Custom Op Package、双库和 kernel 完整实践
 
 examples/SampleApp.md

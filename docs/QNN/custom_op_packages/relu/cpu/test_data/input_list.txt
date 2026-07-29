@@ -1,0 +1,1 @@
+input:=/data/local/tmp/qnn/custom_relu/input/input.raw
