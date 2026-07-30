@@ -47,6 +47,57 @@ tar -cf qnn_quantization/05_quantized_matmul/model_bin/per_axis_weight.bin \
   rhs_per_axis_weight.raw
 ```
 
+### `rhs_per_axis_weight` 的来源
+
+`int8_per_axis_weight_matmul_model.cpp` 中的：
+
+```cpp
+rhs.v1.clientBuf = {
+    .data = BINVARSTART(rhs_per_axis_weight),
+    .dataSize = BINLEN(rhs_per_axis_weight),
+};
+```
+
+这里的 `rhs_per_axis_weight` 不是实际文件名，而是
+`qnn-model-lib-generator` 根据静态权重文件生成的 C/C++ 链接符号。对应的实际
+文件是：
+
+```text
+model_bin/rhs_per_axis_weight.raw
+```
+
+`generate_data.py` 通过以下代码生成该文件：
+
+```python
+rhs_axis_i8.tofile(ROOT / "model_bin" / "rhs_per_axis_weight.raw")
+```
+
+随后，前面的 `tar` 命令将它打包进：
+
+```text
+model_bin/per_axis_weight.bin
+```
+
+完整关系如下：
+
+```text
+rhs_per_axis_weight.raw
+        │
+        │ tar -cf per_axis_weight.bin
+        ▼
+per_axis_weight.bin
+        │
+        │ qnn-model-lib-generator -b
+        ▼
+BINVARSTART(rhs_per_axis_weight)
+BINLEN(rhs_per_axis_weight)
+```
+
+编译 model library 时，`-b model_bin/per_axis_weight.bin` 会将其中的
+`rhs_per_axis_weight.raw` 嵌入动态库，并生成上面的符号。运行时
+`QNN_TENSOR_TYPE_STATIC` 类型的 RHS 通过 `clientBuf` 直接引用这段嵌入数据，
+不需要在 `input_list` 中提供 RHS，也不需要把 raw 或 bin 文件单独推送到设备。
+
 ## 编译
 
 FP32：
@@ -80,6 +131,113 @@ PATH=/home/lingbok/android/android-ndk-r28:$PATH \
   -o qnn_quantization/05_quantized_matmul/model_libs/int8_per_axis
 ```
 
+## 部署到设备
+
+以下命令假设 QNN runtime、`qnn-sample-app` 和 HTP DSP 库已经部署到
+`/data/local/tmp/qnn`。
+
+```bash
+adb shell 'mkdir -p \
+  /data/local/tmp/qnn/qnn_quantized_matmul/lib \
+  /data/local/tmp/qnn/qnn_quantized_matmul/input \
+  /data/local/tmp/qnn/qnn_quantized_matmul/output/fp32 \
+  /data/local/tmp/qnn/qnn_quantized_matmul/output/int8_per_tensor \
+  /data/local/tmp/qnn/qnn_quantized_matmul/output/int8_per_axis'
+
+adb push \
+  qnn_quantization/05_quantized_matmul/model_libs/fp32/aarch64-android/libfp32_matmul_model.so \
+  /data/local/tmp/qnn/qnn_quantized_matmul/lib/
+
+adb push \
+  qnn_quantization/05_quantized_matmul/model_libs/int8_per_tensor/aarch64-android/libint8_per_tensor_matmul_model.so \
+  /data/local/tmp/qnn/qnn_quantized_matmul/lib/
+
+adb push \
+  qnn_quantization/05_quantized_matmul/model_libs/int8_per_axis/aarch64-android/libint8_per_axis_weight_matmul_model.so \
+  /data/local/tmp/qnn/qnn_quantized_matmul/lib/
+
+adb push \
+  qnn_quantization/05_quantized_matmul/input/. \
+  /data/local/tmp/qnn/qnn_quantized_matmul/input/
+```
+
+`per_axis_weight.bin` 已由 `qnn-model-lib-generator` 嵌入
+`libint8_per_axis_weight_matmul_model.so`，运行时不需要单独推送。
+
+## 执行 FP32 MatMul
+
+```bash
+adb shell 'cd /data/local/tmp/qnn && \
+rm -rf qnn_quantized_matmul/output/fp32/* && \
+export LD_LIBRARY_PATH="$PWD/qnn_quantized_matmul/lib:$PWD/lib:$LD_LIBRARY_PATH" && \
+export ADSP_LIBRARY_PATH="$PWD/dsp;$PWD/lib;/vendor/dsp/cdsp;/vendor/lib/rfsa/adsp:/system/lib/rfsa/adsp:/dsp" && \
+./bin/qnn-sample-app \
+  --backend lib/libQnnHtp.so \
+  --model qnn_quantized_matmul/lib/libfp32_matmul_model.so \
+  --input_list qnn_quantized_matmul/input/fp32_input_list.txt \
+  --output_dir qnn_quantized_matmul/output/fp32 \
+  --input_data_type float \
+  --output_data_type float_only \
+  --log_level info'
+```
+
+## 执行 INT8 per-tensor MatMul
+
+输入文件已经是模型原生的 UINT8 数据，因此必须使用
+`--input_data_type native`。输出保留 UINT8 原始值，供比较脚本自行反量化。
+
+```bash
+adb shell 'cd /data/local/tmp/qnn && \
+rm -rf qnn_quantized_matmul/output/int8_per_tensor/* && \
+export LD_LIBRARY_PATH="$PWD/qnn_quantized_matmul/lib:$PWD/lib:$LD_LIBRARY_PATH" && \
+export ADSP_LIBRARY_PATH="$PWD/dsp;$PWD/lib;/vendor/dsp/cdsp;/vendor/lib/rfsa/adsp:/system/lib/rfsa/adsp:/dsp" && \
+./bin/qnn-sample-app \
+  --backend lib/libQnnHtp.so \
+  --model qnn_quantized_matmul/lib/libint8_per_tensor_matmul_model.so \
+  --input_list qnn_quantized_matmul/input/per_tensor_input_list.txt \
+  --output_dir qnn_quantized_matmul/output/int8_per_tensor \
+  --input_data_type native \
+  --output_data_type native_only \
+  --log_level info'
+```
+
+## 执行 INT8 per-axis static-weight MatMul
+
+这个命令用于复现后文记录的 HTP Graph Prepare 崩溃：
+
+```bash
+adb shell 'cd /data/local/tmp/qnn && \
+rm -rf qnn_quantized_matmul/output/int8_per_axis/* && \
+export LD_LIBRARY_PATH="$PWD/qnn_quantized_matmul/lib:$PWD/lib:$LD_LIBRARY_PATH" && \
+export ADSP_LIBRARY_PATH="$PWD/dsp;$PWD/lib;/vendor/dsp/cdsp;/vendor/lib/rfsa/adsp:/system/lib/rfsa/adsp:/dsp" && \
+./bin/qnn-sample-app \
+  --backend lib/libQnnHtp.so \
+  --model qnn_quantized_matmul/lib/libint8_per_axis_weight_matmul_model.so \
+  --input_list qnn_quantized_matmul/input/per_axis_input_list.txt \
+  --output_dir qnn_quantized_matmul/output/int8_per_axis \
+  --input_data_type native \
+  --output_data_type native_only \
+  --log_level info'
+```
+
+## 拉取输出并比较
+
+```bash
+mkdir -p \
+  qnn_quantization/05_quantized_matmul/device_output/fp32 \
+  qnn_quantization/05_quantized_matmul/device_output/int8_per_tensor
+
+adb pull \
+  /data/local/tmp/qnn/qnn_quantized_matmul/output/fp32/Result_0/output.raw \
+  qnn_quantization/05_quantized_matmul/device_output/fp32/output.raw
+
+adb pull \
+  /data/local/tmp/qnn/qnn_quantized_matmul/output/int8_per_tensor/Result_0/output_native.raw \
+  qnn_quantization/05_quantized_matmul/device_output/int8_per_tensor/output_native.raw
+
+python3 qnn_quantization/05_quantized_matmul/compare_outputs.py
+```
+
 ## 当前结果
 
 FP32 和 INT8 per-tensor 已在 HTP 上成功执行。相对 NumPy FP32 reference：
@@ -109,13 +267,7 @@ raw 数据解释和 MatMul 图是吻合的。
 后续应使用 ONNX QDQ/量化配置，经 QAIRT converter 生成模型，再验证
 `INT8 activation + per-axis weight MatMul`。
 
-## 比较结果
-
-将设备输出放入 `device_output/` 后执行：
-
-```bash
-python3 qnn_quantization/05_quantized_matmul/compare_outputs.py
-```
+## 比较脚本行为
 
 脚本会自动检测 `device_output/int8_per_axis/output_native.raw`；不存在时会明确
 报告 per-axis HTP 输出不可用，不会误用旧输出。
