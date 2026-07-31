@@ -28,6 +28,43 @@ qnn-onnx-converter \
 
 将最后一项改为 `99.99` 可生成更保守的 percentile 模型。
 
+### `percentile_calibration_value` 的含义
+
+`percentile_calibration_value` 表示计算 activation 量化范围时希望覆盖的校准
+数据分布百分比。例如：
+
+```bash
+--act_quantizer_calibration percentile \
+--percentile_calibration_value 99.9
+```
+
+表示使用能够覆盖约 `99.9%` 校准数据分布的范围作为量化范围，允许剩余约
+`0.1%` 的极端尾部在量化时被 clipping。该参数用于降低少量离群值对量化范围
+的影响。
+
+假设绝大多数校准数据位于 `[-0.5, 0.5]`，但包含少量 `8.0` 离群值：
+
+- `99.9` 会更积极地排除尾部，通常得到更窄的范围和更小的 scale。普通数据可用
+  更多量化级，但极端数据被 clipping 的风险更高。
+- `99.99` 会保留更多尾部，通常得到更宽的范围。clipping 风险较低，但 scale
+  可能更大，普通数据的量化分辨率相应降低。
+- 数值越接近 `100`，行为越接近覆盖完整数据范围。
+
+百分位阈值由 converter 根据收集到的 calibration histogram 计算，并不等同于
+简单删除固定数量的最大值。最终正负范围还会受到 symmetric/asymmetric
+quantizer schema 的影响。
+
+该参数只有与下面的配置同时使用时才会生效：
+
+```bash
+--act_quantizer_calibration percentile
+```
+
+使用 `min-max` 校准时，即使 converter 元数据中记录了默认的
+`percentile_calibration_value`，该值也不会参与量化范围计算。它控制的是通过
+calibration 计算的 activation encoding，不会覆盖 `quantization_overrides.json`
+中明确指定的 RHS per-axis weight encoding。
+
 ## 生成的 encoding
 
 | Calibration | LHS scale | LHS offset | output scale |
