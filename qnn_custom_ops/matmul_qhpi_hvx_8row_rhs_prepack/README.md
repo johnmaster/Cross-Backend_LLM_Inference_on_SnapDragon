@@ -23,7 +23,7 @@ MatMulQhpiHvxPackRhs
 MatMulQhpiHvx8RowRhsPrepack
 ```
 
-### PackRhs
+### `PackRhs` 预打包
 
 输入：
 
@@ -44,7 +44,7 @@ const HVX_Vector input_fp16 = vmemu(&input[index]);
 vmemu(&output[index]) = hnnx::s16_from_hf_rnd_sat<13>(input_fp16);
 ```
 
-### Prepacked MatMul
+### 使用预打包权重的 MatMul
 
 输入：
 
@@ -81,7 +81,7 @@ function_with_precomputed_data
 它不适合 DSP stack；全局 buffer 又会破坏多 context 和并发安全。因此通过
 额外 PackRhs graph node 让 QNN 管理中间 tensor 的分配和生命周期。
 
-## 3. FP16 Bit-Carrier
+## 3. FP16 位载体
 
 最初将中间 tensor 声明为：
 
@@ -194,7 +194,7 @@ NaN / Inf:      0 / 0
 
 结果与 8-row vector-convert 版本一致。
 
-## 8. Profiling
+## 8. 性能分析
 
 使用：
 

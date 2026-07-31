@@ -99,7 +99,7 @@ prefill value: max=5.04963100e-04 mean=1.06622887e-04 cosine=1.000000000
 这是把 `tiny_llm_block` prefill graph 里的 q_proj 替换成本 custom op 后，
 与 builtin QNN HTP 输出对比的结果。
 
-## tiny block full graph profiling
+## Tiny Block 完整 Graph 性能分析
 
 统一使用 `qnn-profile-viewer` 生成 CSV，并由
 `tiny_llm_block_custom_matmul/tools/compare_prefill_profiles.py` 跳过第一次

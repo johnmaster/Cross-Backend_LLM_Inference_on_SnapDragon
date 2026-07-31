@@ -154,7 +154,7 @@ matmulqhpiscalar_float_32_Execute(...)
 写入 output Tensor
 ```
 
-### 4.3 Package Interface
+### 4.3 Package 接口
 
 ```text
 htp/MatMulQhpiScalarOpPackage/src/MatMulQhpiScalarOpPackageInterface.cpp

@@ -1,39 +1,35 @@
 # QHPI HVX MatMul
 
-This directory implements an FP16 batched MatMul custom op with the QHPI
-External Op Package API.
+本目录使用 QHPI External Op Package API 实现 FP16 批量 MatMul 自定义算子。
 
-## Current Implementation
+## 当前实现
 
-- QHPI Op: `MatMulQhpiHvx`
-- Op Package: `MatMulQhpiHvxOpPackage`
-- Internal inputs and output: `QHPI_Float16`
-- Tensor layout: `QHPI_Layout_Flat4`
-- Runtime resource: `QHPI_RESOURCE_HVX`
-- Shape contract: `[B,H,M,K] x [B,H,K,N] -> [B,H,M,N]`
-- Graph boundary: FP32 app tensors, QNN `Cast` to/from FP16 around the custom op
+- QHPI 算子：`MatMulQhpiHvx`
+- Op Package：`MatMulQhpiHvxOpPackage`
+- 内部输入和输出：`QHPI_Float16`
+- Tensor layout：`QHPI_Layout_Flat4`
+- 运行时资源：`QHPI_RESOURCE_HVX`
+- Shape 约定：`[B,H,M,K] x [B,H,K,N] -> [B,H,M,N]`
+- Graph 边界：应用侧 tensor 为 FP32，自定义算子前后使用 QNN `Cast` 与 FP16 互转
 
-The Hexagon/libnative path computes full 64-column output tiles with HVX
-integer multiply-accumulate:
+Hexagon/libnative 路径使用 HVX 整数乘加计算完整的 64 列输出 tile：
 
-1. convert FP16 inputs to Q13 fixed-point values;
-2. broadcast one Q13 lhs scalar with `Q6_Vh_vsplat_R`;
-3. load 64 contiguous Q13 rhs columns with `vmemu`;
-4. accumulate int16 x int16 into int32 lanes with
-   `Q6_Ww_vmpyacc_WwVhVh`;
-5. dequantize the int32 accumulators and write FP16 output.
+1. 将 FP16 输入转换为 Q13 定点值。
+2. 使用 `Q6_Vh_vsplat_R` 广播一个 Q13 LHS 标量。
+3. 使用 `vmemu` 加载连续的 64 个 Q13 RHS 列元素。
+4. 使用 `Q6_Ww_vmpyacc_WwVhVh` 将 int16 × int16 累加到 int32 lane。
+5. 反量化 int32 累加值并写入 FP16 输出。
 
-Columns that do not fill a 64-wide tile use the scalar FP16-input,
-FP32-accumulation fallback. This keeps arbitrary `N` correct.
+不足 64 列的尾部使用 FP16 标量输入、FP32 累加的 fallback 路径，从而保证任意
+`N` 都能得到正确结果。
 
-The first FP16-floating HVX prototype using `Q6_Wsf_vmpyacc_WsfVhfVhf`
-compiled and dispatched on this device, but returned zeros at runtime. The
-checked-in implementation therefore uses the integer HVX path above as the
-working correctness milestone.
+最初使用 `Q6_Wsf_vmpyacc_WsfVhfVhf` 的 FP16 浮点 HVX 原型能够在本设备上完成
+编译和调度，但运行时返回全零。因此，当前提交的实现使用上述整数 HVX 路径作为
+已验证正确性的基线。
 
-## Demo Shape
+## 示例 Shape
 
-The checked-in sample model uses:
+仓库中的示例模型使用：
 
 ```text
 lhs    [1,1,128,256]
@@ -41,11 +37,10 @@ rhs    [1,1,256,256]
 output [1,1,128,256]
 ```
 
-That shape intentionally has `N=256`, so the sample exercises four full
-64-column HVX tiles per output row. The larger `M` and `K` dimensions make it
-useful for comparing future matrix multiplication optimizations.
+该 shape 特意设置 `N=256`，因此每个输出行会执行四个完整的 64 列 HVX tile。
+较大的 `M` 和 `K` 便于比较不同矩阵乘优化方案。
 
-## Files
+## 文件
 
 ```text
 matmul_qhpi_hvx/
@@ -62,9 +57,9 @@ matmul_qhpi_hvx/
 └── test_data/
 ```
 
-## Build
+## 构建
 
-Generate or refresh the package skeleton if needed:
+需要重新生成或更新 Package 骨架时执行：
 
 ```bash
 qnn-op-package-generator \
@@ -73,7 +68,7 @@ qnn-op-package-generator \
   --debug
 ```
 
-Build the HTP package, for example:
+构建 HTP Package：
 
 ```bash
 cd "$REPO/qnn_custom_ops/matmul_qhpi_hvx/htp/MatMulQhpiHvxOpPackage"
@@ -81,31 +76,30 @@ make htp_v75
 make htp_aarch64
 ```
 
-The expected package library names are:
+预期生成的动态库名称：
 
 ```text
 libQnnMatMulQhpiHvxOpPackage.so
 libcustom_matmul_qhpi_hvx_model.so
 ```
 
-## Verification
+## 验证
 
-Regenerate sample inputs and expected outputs:
+重新生成示例输入和预期输出：
 
 ```bash
 python3 qnn_custom_ops/matmul_qhpi_hvx/scripts/generate_inputs.py
 ```
 
-After building the Hexagon shared object, inspect it for HVX integer multiply
-instructions:
+构建 Hexagon 动态库后，检查其中是否包含 HVX 整数乘法指令：
 
 ```bash
 llvm-objdump -d build/hexagon-v75/libQnnMatMulQhpiHvxOpPackage.so | \
   grep -E "vmpy|vmpyacc|vsplat|vmem"
 ```
 
-Compare device output against `test_data/expected_float.raw` at the FP16 result
-tolerance. The current Q13 HVX path has been measured on the sample input at:
+按照 FP16 结果容差，将设备输出与 `test_data/expected_float.raw` 比较。当前 Q13
+HVX 路径在示例输入上的实测结果为：
 
 ```text
 max_abs_error  = 0.0002441704
@@ -113,23 +107,22 @@ mean_abs_error = 0.0000352946
 allclose(atol=1e-3, rtol=1e-3) = true
 ```
 
-## HVX Intrinsics Notes
+## HVX Intrinsic 说明
 
-`matmulqhpihvxCompute64ColumnsHvx()` is a local helper in this package, not a
-Qualcomm API. The actual HVX intrinsics used inside it come from the Hexagon
-SDK and QNN HTP headers.
+`matmulqhpihvxCompute64ColumnsHvx()` 是本 Package 的本地辅助函数，不是
+Qualcomm API。函数内部使用的 HVX intrinsic 来自 Hexagon SDK 和 QNN HTP 头文件。
 
-Important source files:
+相关源文件：
 
 ```text
-Hexagon SDK intrinsic declarations:
+Hexagon SDK intrinsic 声明：
 /local/mnt/workspace/Qualcomm/Hexagon_SDK/5.5.5.0/tools/HEXAGON_Tools/8.7.06/Tools/target/hexagon/include/hvx_hexagon_protos.h
 
-QNN HTP convenience wrappers:
+QNN HTP 封装：
 /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/HTP/core/intrinsics.h
 ```
 
-Useful search commands:
+检索命令：
 
 ```bash
 rg "Q6_.*vmpy|Q6_.*vadd|Q6_.*vsplat|Q6_.*vcvt|Q6_.*vmem" \
@@ -139,7 +132,7 @@ rg "vmemu|q6op_|HVX_Vector|HVX_VectorPair" \
   /home/lingbok/Qualcomm/qairt/2.47.0.260601/include/QNN/HTP/core/intrinsics.h
 ```
 
-The current kernel uses these HVX pieces:
+当前 kernel 使用以下 HVX 类型和 intrinsic：
 
 ```cpp
 HVX_Vector
@@ -151,34 +144,33 @@ Q6_V_hi_W(...)
 vmemu(...)
 ```
 
-`HVX_Vector` is one 128-byte HVX vector when compiled with
-`-mhvx-length=128B`. For 16-bit lanes, that means 64 lanes per vector. For
-32-bit lanes, that means 32 lanes per vector.
+使用 `-mhvx-length=128B` 编译时，`HVX_Vector` 表示一个 128 字节 HVX vector。
+对于 16-bit lane，每个 vector 包含 64 个 lane；对于 32-bit lane，每个 vector
+包含 32 个 lane。
 
-`HVX_VectorPair` is two HVX vectors. Many widening operations use a pair
-because multiplying 64 int16 lanes produces 64 int32 results, which need
-`64 * 4 = 256` bytes.
+`HVX_VectorPair` 由两个 HVX vector 组成。许多 widening 操作需要使用 vector
+pair，因为 64 个 int16 lane 相乘会产生 64 个 int32 结果，需要
+`64 * 4 = 256` 字节。
 
-Name reading example:
+名称解析示例：
 
 ```text
 Q6_Ww_vmpyacc_WwVhVh
-   Q6       Hexagon intrinsic namespace
-   Ww       result is a vector pair of 32-bit words
+   Q6       Hexagon intrinsic 命名空间
+   Ww       结果是由 32-bit word 组成的 vector pair
    vmpyacc  vector multiply accumulate
-   Ww       accumulator input is a vector pair of 32-bit words
-   Vh       first multiplicand is a vector of 16-bit halfwords
-   Vh       second multiplicand is a vector of 16-bit halfwords
+   Ww       累加器输入是由 32-bit word 组成的 vector pair
+   Vh       第一个乘数是由 16-bit halfword 组成的 vector
+   Vh       第二个乘数是由 16-bit halfword 组成的 vector
 ```
 
-So this intrinsic means roughly:
+该 intrinsic 的含义近似为：
 
 ```cpp
 int32_vector_pair += int16_vector * int16_vector;
 ```
 
-In this package, the FP16 inputs are converted to Q13 fixed-point values before
-the HVX multiply:
+本 Package 在执行 HVX 乘法前将 FP16 输入转换为 Q13 定点值：
 
 ```cpp
 const int16_t lhs_q13 = matmulqhpihvxFloatToQ13(...);
@@ -186,35 +178,33 @@ const HVX_Vector lhs_vec = Q6_Vh_vsplat_R(lhs_q13);
 acc = Q6_Ww_vmpyacc_WwVhVh(acc, lhs_vec, vmemu(rhs_q13));
 ```
 
-`Q6_Vh_vsplat_R()` broadcasts one scalar 16-bit value into all 64 halfword
-lanes of an `HVX_Vector`.
+`Q6_Vh_vsplat_R()` 将一个 16-bit 标量广播到 `HVX_Vector` 的全部 64 个
+halfword lane。
 
-`vmemu(ptr)` is a QNN HTP wrapper for unaligned HVX vector load/store. It is
-used here for stack buffers and output buffers because it avoids requiring the
-pointer to be 128-byte aligned:
+`vmemu(ptr)` 是 QNN HTP 对非对齐 HVX vector load/store 的封装。这里用它访问
+栈缓冲区和输出缓冲区，从而不要求指针按 128 字节对齐：
 
 ```cpp
 HVX_Vector rhs_vec = vmemu(rhs_q13);
 vmemu(acc_lo_store) = Q6_V_lo_W(acc);
 ```
 
-`Q6_V_lo_W()` and `Q6_V_hi_W()` split an `HVX_VectorPair` into its low and high
-vectors. For `Q6_Ww_vmpyacc_WwVhVh`, the low vector contains even output lanes
-and the high vector contains odd output lanes, so the writeback interleaves
-them:
+`Q6_V_lo_W()` 和 `Q6_V_hi_W()` 将 `HVX_VectorPair` 拆分为低位和高位 vector。
+对于 `Q6_Ww_vmpyacc_WwVhVh`，低位 vector 包含偶数输出 lane，高位 vector
+包含奇数输出 lane，因此写回时需要交错排列：
 
 ```cpp
 output[col + 2 * lane]     = dequantized_low_lane;
 output[col + 2 * lane + 1] = dequantized_high_lane;
 ```
 
-### How We Know This Is HVX, Not HMX
+### 如何确认使用的是 HVX 而不是 HMX
 
-This package uses HVX because:
+确认本 Package 使用 HVX 的依据：
 
-- the code uses `HVX_Vector` and `HVX_VectorPair`;
-- the intrinsics are declared in `hvx_hexagon_protos.h`;
-- the generated code disassembles to vector instructions such as:
+- 代码使用 `HVX_Vector` 和 `HVX_VectorPair`。
+- intrinsic 声明位于 `hvx_hexagon_protos.h`。
+- 生成代码反汇编后包含以下 vector 指令：
 
 ```text
 v5:4.w += vmpy(v0.h,v1.h)
@@ -222,6 +212,6 @@ v0.h = vsplat(r2)
 vmem(...)
 ```
 
-Those are ordinary HVX vector-lane instructions. HMX would require HMX-specific
-headers, intrinsics, matrix/tile layouts, and accumulator/control paths. This
-package does not use any HMX intrinsic or HMX tile data path.
+这些都是普通的 HVX vector-lane 指令。HMX 需要专用头文件、intrinsic、
+matrix/tile layout 以及 accumulator/control 路径。本 Package 没有使用任何 HMX
+intrinsic 或 HMX tile 数据路径。

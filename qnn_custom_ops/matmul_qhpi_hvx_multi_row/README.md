@@ -413,7 +413,7 @@ Profiling Initialization failure
 serialization 所需的三个 function pointer。这个问题只影响 profile 日志的
 序列化，不代表 backend detailed profiling 本身不可用。
 
-### 11.2 Profile SampleApp
+### 11.2 使用 SampleApp 采集 Profile
 
 仓库中保存了一份 QAIRT 2.47 SampleApp：
 

@@ -66,7 +66,7 @@ NaN / Inf:      0 / 0
 
 结果与未 prepack 的 FP32-store 版本完全一致。
 
-## Profiling
+## 性能分析
 
 运行 20 次并丢弃第一次 warm-up：
 

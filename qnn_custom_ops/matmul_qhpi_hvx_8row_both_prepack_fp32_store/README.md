@@ -69,7 +69,7 @@ NaN / Inf:      0 / 0
 
 结果与 LHS-only prepack 及 FP32-store 版本一致。
 
-## Profiling
+## 性能分析
 
 20 次 inference，丢弃第一次 warm-up：
 
