@@ -13,9 +13,25 @@ RHS_SHAPE = (1, 1, 256, 256)
 
 
 def packed_int4_tensor(name, values):
+    # NumPy does not provide a regular int4 dtype. Keep the already-quantized
+    # values in int8 temporarily; every element must be in signed INT4 range
+    # [-8, 7]. Flattening preserves the tensor's row-major element order.
     flat = values.astype(np.int8).reshape(-1)
+
+    # Keep the low four bits of each signed value. For negative numbers this
+    # produces the 4-bit two's-complement representation, for example:
+    #   -8 -> 0b1000 (0x8), -1 -> 0b1111 (0xF), 7 -> 0b0111 (0x7).
     nibbles = (flat.astype(np.int16) & 0xF).astype(np.uint8)
+
+    # Pack two INT4 elements into one byte using ONNX's low-nibble-first order:
+    #   even-indexed value -> bits [3:0]
+    #   odd-indexed value  -> bits [7:4]
+    # The current RHS has 65,536 elements, so its packed payload is 32,768
+    # bytes. This expression requires an even number of elements.
     packed = nibbles[0::2] | (nibbles[1::2] << 4)
+
+    # The TensorProto keeps the original logical shape and INT4 element type,
+    # while raw_data contains the physically packed two-elements-per-byte data.
     tensor = TensorProto()
     tensor.name = name
     tensor.data_type = TensorProto.INT4
