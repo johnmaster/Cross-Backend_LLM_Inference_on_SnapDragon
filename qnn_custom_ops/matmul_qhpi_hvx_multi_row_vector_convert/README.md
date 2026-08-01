@@ -11,6 +11,55 @@
 [1,1,128,256] x [1,1,256,256] -> [1,1,128,256]
 ```
 
+## 核心思路
+
+这个版本没有改变 MatMul 公式，而是优化 RHS 的准备过程。函数
+`matmulqhpihvxmultirowvectorconvertCompute4x64Hvx()` 每次计算输出矩阵中的一个
+`4x64` tile：
+
+```text
+                       RHS 连续 64 列
+                  col ───────────── col+63
+                       ┌────────────────┐
+LHS row                │ 64 个输出      │ -> acc0
+LHS row + 1            │ 64 个输出      │ -> acc1
+LHS row + 2            │ 64 个输出      │ -> acc2
+LHS row + 3            │ 64 个输出      │ -> acc3
+                       └────────────────┘
+```
+
+在每个 reduction 位置，四个输出行使用同一段
+`rhs[reduction, col:col+64]`。因此内核只加载并转换一次 RHS vector，然后分别与
+四个 LHS 标量相乘：
+
+```cpp
+rhs_vec = vectorConvertToQ13(rhs[reduction][col : col + 64]);
+
+lhs0 = broadcast(Q13(lhs[row    ][reduction]));
+lhs1 = broadcast(Q13(lhs[row + 1][reduction]));
+lhs2 = broadcast(Q13(lhs[row + 2][reduction]));
+lhs3 = broadcast(Q13(lhs[row + 3][reduction]));
+
+acc0 += lhs0 * rhs_vec;
+acc1 += lhs1 * rhs_vec;
+acc2 += lhs2 * rhs_vec;
+acc3 += lhs3 * rhs_vec;
+```
+
+这包含两个独立优化：
+
+1. `multi-row`：四个输出行复用一个 RHS vector，使 RHS 加载和转换次数降为
+   `1x64` 实现的四分之一；
+2. `vector convert`：使用一组 HVX 指令把 64 个 FP16 RHS 同时转换为 64 个
+   Q13 int16，替代 64 次标量转换。
+
+完整矩阵按照 `row += 4`、`col += 64` 遍历。不足 4 行时使用 `1x64` HVX
+路径；不足 64 列时使用标量 dot product，因此 `M` 和 `N` 不要求正好是 tile
+大小的整数倍。
+
+当前只有 RHS 转换实现了向量化。四个 LHS 值仍按标量转换并广播，Q26 累加值恢复
+为 FP16 的写回过程也仍是标量实现。
+
 ## 1. 优化动机
 
 Multi-row 版本已经把 RHS 转换次数降低到原来的四分之一，但每个 reduction
@@ -49,6 +98,18 @@ const HVX_Vector fp16_values = vmemu(values);
 ```cpp
 return hnnx::s16_from_hf_rnd_sat<13>(fp16_values);
 ```
+
+这里一个 128 字节 `HVX_Vector` 正好保存 64 个 FP16。模板参数 `13` 表示输出
+保留 13 个二进制小数位，单个 lane 的语义近似为：
+
+```text
+q13 = saturate_int16(round_to_nearest_ties_away(fp16_value * 2^13))
+```
+
+因此返回的同一个 `HVX_Vector` 可按 64 个 int16 lane 直接交给
+`Q6_Ww_vmpyacc_WwVhVh()`。`rnd` 表示舍入到最近值且中点远离零，`sat` 表示超出
+int16 范围时饱和到 `[-32768, 32767]`。该 helper 内部走 qf32 中间路径，不是
+简单调用一条 FP16 转 int16 指令。
 
 该 helper 使用 qf32 中间结果，并通过 HVX 指令完成：
 

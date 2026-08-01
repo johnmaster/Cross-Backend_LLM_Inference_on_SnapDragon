@@ -60,13 +60,34 @@ static inline int16_t matmulqhpihvxmultirowvectorconvertFloatToQ13(float value) 
 }
 
 #if MATMUL_QHPI_HVX_MULTI_ROW_VECTOR_CONVERT_INTRINSICS
+// Load 64 contiguous FP16 values (64 * 2 bytes = one 128-byte HVX vector)
+// and convert all lanes to signed Q13 in parallel.
+//
+// hnnx::s16_from_hf_rnd_sat<FBITS>() conceptually applies this operation to
+// every lane:
+//
+//   output = saturate_int16(round_to_nearest_ties_away(input * 2^FBITS))
+//
+// Therefore FBITS=13 produces the same fixed-point scale used by the scalar
+// path: q13 ~= input * 8192. The returned HVX_Vector is then interpreted as
+// 64 signed int16 lanes by Q6_Ww_vmpyacc_WwVhVh(). The helper uses a qf32
+// intermediate, performs nearest rounding (halfway cases away from zero), and
+// saturates values outside [-32768, 32767].
+//
+// QAIRT 2.47 documents exhaustive input testing only for FBITS=-2..9 and notes
+// possible internal rounding differences for FBITS>=10. FBITS=13 is retained
+// because it matches this kernel's Q13 arithmetic and is verified for the
+// benchmark input domain, but it must not be assumed bit-exact for every FP16
+// bit pattern without additional validation.
 static inline HVX_Vector
 matmulqhpihvxmultirowvectorconvertConvert64Fp16ToQ13(
     const __fp16 *values) {
+  // vmemu supports an address that is not aligned to the 128-byte HVX width.
+  // It only loads the packed FP16 bits; it does not perform the conversion.
   const HVX_Vector fp16_values = vmemu(values);
 
-  // This uses QAIRT's qf32 intermediate path and avoids the direct half-float
-  // vector multiply, which returns zero on the target device.
+  // Use QAIRT's qf32-based helper instead of a direct half-float vector
+  // multiply, which compiled successfully but returned zero on this device.
   return hnnx::s16_from_hf_rnd_sat<13>(fp16_values);
 }
 
@@ -136,6 +157,8 @@ static inline void matmulqhpihvxmultirowvectorconvertCompute4x64Hvx(
     vmemu(&output[output_base + (uint64_t)row * n + col]) = rhs_vec;
   }
 #else
+  // One function call computes output[row:row+4, col:col+64]. Each output row
+  // needs 64 int32 accumulators, represented by one HVX_VectorPair.
   const HVX_Vector zero = Q6_V_vzero();
   HVX_VectorPair acc0 = Q6_W_vcombine_VV(zero, zero);
   HVX_VectorPair acc1 = Q6_W_vcombine_VV(zero, zero);
@@ -143,12 +166,18 @@ static inline void matmulqhpihvxmultirowvectorconvertCompute4x64Hvx(
   HVX_VectorPair acc3 = Q6_W_vcombine_VV(zero, zero);
 
   for (uint32_t reduction = 0; reduction < k; ++reduction) {
+    // All four output rows consume the same 64 RHS values at this reduction
+    // position. Load and convert that RHS slice once, then reuse rhs_vec in
+    // four independent multiply-accumulate operations.
     const uint64_t rhs_row_base =
         rhs_base + (uint64_t)reduction * n + col;
     const HVX_Vector rhs_vec =
         matmulqhpihvxmultirowvectorconvertConvert64Fp16ToQ13(
             &rhs[rhs_row_base]);
 
+    // Each LHS row contributes one scalar at this reduction position. Convert
+    // it to Q13 and broadcast it across all 64 int16 lanes so lane j computes
+    // lhs[row_i, reduction] * rhs[reduction, col + j].
     const HVX_Vector lhs0 = Q6_Vh_vsplat_R(
         matmulqhpihvxmultirowvectorconvertFloatToQ13(
             static_cast<float>(lhs[lhs_base + reduction])));
@@ -162,6 +191,8 @@ static inline void matmulqhpihvxmultirowvectorconvertCompute4x64Hvx(
         matmulqhpihvxmultirowvectorconvertFloatToQ13(
             static_cast<float>(lhs[lhs_base + (uint64_t)3 * k + reduction])));
 
+    // Four rows share rhs_vec but keep separate accumulators. After all K
+    // iterations, acc0..acc3 contain the 4x64 output tile in Q26.
     acc0 = Q6_Ww_vmpyacc_WwVhVh(acc0, lhs0, rhs_vec);
     acc1 = Q6_Ww_vmpyacc_WwVhVh(acc1, lhs1, rhs_vec);
     acc2 = Q6_Ww_vmpyacc_WwVhVh(acc2, lhs2, rhs_vec);
@@ -183,6 +214,9 @@ static inline void matmulqhpihvxmultirowvectorconvertCompute4x64Hvx(
   for (uint32_t row = 0; row < 4; ++row) {
     const uint64_t row_output_base = output_base + (uint64_t)row * n + col;
     for (uint32_t lane = 0; lane < 32; ++lane) {
+      // Widening int16 multiplication places even output lanes in the low
+      // vector and odd output lanes in the high vector. Interleave them while
+      // scaling Q26 back to floating point and storing FP16 output.
       output[row_output_base + 2 * lane] = static_cast<__fp16>(
           static_cast<float>(acc_lo_store[row][lane]) * inv_scale);
       output[row_output_base + 2 * lane + 1] = static_cast<__fp16>(
