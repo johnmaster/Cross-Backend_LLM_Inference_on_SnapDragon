@@ -1,1 +1,1 @@
-lhs:=/data/local/tmp/qnn/custom_matmul_qhpi_hvx_8row_vector_convert/input/lhs.raw rhs:=/data/local/tmp/qnn/custom_matmul_qhpi_hvx_8row_vector_convert/input/rhs.raw
+lhs:=/data/local/tmp/qnn/matmul_qnn_builtin/input/lhs.raw rhs:=/data/local/tmp/qnn/matmul_qnn_builtin/input/rhs.raw
