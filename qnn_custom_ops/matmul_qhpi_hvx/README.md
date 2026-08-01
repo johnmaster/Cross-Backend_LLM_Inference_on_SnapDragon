@@ -20,6 +20,18 @@ Hexagon/libnative 路径使用 HVX 整数乘加计算完整的 64 列输出 tile
 4. 使用 `Q6_Ww_vmpyacc_WwVhVh` 将 int16 × int16 累加到 int32 lane。
 5. 反量化 int32 累加值并写入 FP16 输出。
 
+### 为什么转换为 Q13
+
+Q13 使用 13 个二进制小数位，即 `q = round(value * 8192)`。这样可以将 FP16
+输入表示为 int16，并使用 HVX 的 int16 乘法、int32 累加指令；两个 Q13 数相乘
+后得到 Q26，最终除以 `8192 * 8192` 即可恢复浮点结果。对于本示例的输入范围
+`[-0.25, 0.25]` 和 `K=256`，Q13 在保持较高精度的同时，也能避免 int32 累加
+溢出。
+
+转换代码在缩放结果上对正数加 `0.5f`、对负数减 `0.5f`，是因为浮点数转换为
+整数时会向零截断。加入半个整数单位后，可实现四舍五入到最接近的 Q13 整数，
+减少直接截断产生的量化误差。
+
 不足 64 列的尾部使用 FP16 标量输入、FP32 累加的 fallback 路径，从而保证任意
 `N` 都能得到正确结果。
 
@@ -185,9 +197,13 @@ halfword lane。
 栈缓冲区和输出缓冲区，从而不要求指针按 128 字节对齐：
 
 ```cpp
-HVX_Vector rhs_vec = vmemu(rhs_q13);
-vmemu(acc_lo_store) = Q6_V_lo_W(acc);
+HVX_Vector rhs_vec = vmemu(rhs_q13);       // 内存 -> HVX vector
+vmemu(acc_lo_store) = Q6_V_lo_W(acc);      // HVX vector -> 内存
 ```
+
+当前使用 128 字节 HVX vector，因此 `vmemu(rhs_q13)` 会一次加载 64 个 int16，
+而写入 `acc_lo_store` 或 `acc_hi_store` 时会一次保存 32 个 int32。`vmemu()` 只负责
+在内存和 HVX 寄存器之间搬运数据，不执行 Q13 转换、乘法或累加。
 
 `Q6_V_lo_W()` 和 `Q6_V_hi_W()` 将 `HVX_VectorPair` 拆分为低位和高位 vector。
 对于 `Q6_Ww_vmpyacc_WwVhVh`，低位 vector 包含偶数输出 lane，高位 vector
