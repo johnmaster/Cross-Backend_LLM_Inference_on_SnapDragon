@@ -20,12 +20,6 @@
 static uint32_t matmulqhpihvx8rowfp32storemultithread_float_16_Execute(QHPI_RuntimeHandle *handle,
                                       uint32_t num_outputs, QHPI_Tensor **outputs,
                                       uint32_t num_inputs, const QHPI_Tensor *const *inputs);
-static uint32_t matmulqhpihvxstaticrhsprecomputed_float_16_Precompute(
-    QHPI_RuntimeHandle *handle, void *data, uint32_t num_outputs,
-    QHPI_Tensor **outputs, uint32_t num_inputs,
-    const QHPI_Tensor *const *inputs);
-static uint32_t matmulqhpihvxstaticrhsprecomputed_float_16_Execute(
-    QHPI_RuntimeHandle *handle, const void *precomputed_data);
 static uint32_t matmulqhpihvxofflineq13rhs_float_16_Execute(
     QHPI_RuntimeHandle *handle, uint32_t num_outputs, QHPI_Tensor **outputs,
     uint32_t num_inputs, const QHPI_Tensor *const *inputs);
@@ -91,42 +85,6 @@ static inline int16_t matmulqhpihvx8rowfp32storemultithreadFloatToQ13(float valu
   }
   return static_cast<int16_t>(q);
 }
-
-namespace {
-constexpr uint32_t kStaticRhsMagic = 0x51524853U;
-constexpr uint32_t kStaticRhsPackedColumns = 512U;
-constexpr uint32_t kStaticRhsMaxElements =
-    896U * kStaticRhsPackedColumns;
-constexpr uint32_t kStaticRhsAlignment = 128U;
-
-struct StaticRhsPrecomputedHeader {
-  uint32_t magic;
-  uint32_t batch;
-  uint32_t heads;
-  uint32_t m;
-  uint32_t k;
-  uint32_t n;
-  uintptr_t lhs;
-  uintptr_t rhs_fp16;
-  uintptr_t output;
-};
-
-constexpr uint32_t kStaticRhsPrecomputedBytes =
-    sizeof(StaticRhsPrecomputedHeader) + kStaticRhsAlignment - 1U +
-    kStaticRhsMaxElements * sizeof(int16_t);
-
-static inline int16_t *staticRhsPackedData(void *data) {
-  const uintptr_t first =
-      reinterpret_cast<uintptr_t>(data) + sizeof(StaticRhsPrecomputedHeader);
-  return reinterpret_cast<int16_t *>(
-      (first + kStaticRhsAlignment - 1U) &
-      ~(static_cast<uintptr_t>(kStaticRhsAlignment) - 1U));
-}
-
-static inline const int16_t *staticRhsPackedData(const void *data) {
-  return staticRhsPackedData(const_cast<void *>(data));
-}
-}  // namespace
 
 #if MATMUL_QHPI_HVX_8ROW_FP32_STORE_MULTITHREAD_INTRINSICS
 static inline HVX_Vector
@@ -346,7 +304,7 @@ static inline void matmulqhpihvx8rowfp32storemultithreadCompute4x64Hvx(
   }
 }
 
-static inline void matmulqhpihvxstaticrhsprecomputedCompute4x64Hvx(
+static inline void matmulqhpihvxofflineq13Compute4x64Hvx(
     const int16_t *lhs,
     const int16_t *rhs,
     float *output,
@@ -524,28 +482,6 @@ static QHPI_Tensor_Signature_v1 matmulqhpihvx8rowfp32storemultithread_float_16_I
 };
 
 static QHPI_Tensor_Signature_v1
-    matmulqhpihvxstaticrhsprecomputed_float_16_InputSignatures[] = {
-    {
-        .element_type = QHPI_Float16,
-        .layout = QHPI_Layout_Flat4,
-        .storage = QHPI_Storage_Direct,
-        .mem_placement = QHPI_MemLoc_DDR_OR_TCM
-    },
-    {
-        .element_type = QHPI_Float16,
-        .layout = QHPI_Layout_Flat4,
-        .storage = QHPI_Storage_Direct,
-        .mem_placement = QHPI_MemLoc_DDR_OR_TCM
-    },
-    {
-        .element_type = QHPI_Float32,
-        .layout = QHPI_Layout_Flat4,
-        .storage = QHPI_Storage_Direct,
-        .mem_placement = QHPI_MemLoc_DDR_OR_TCM
-    }
-};
-
-static QHPI_Tensor_Signature_v1
     matmulqhpihvxofflineq13rhs_float_16_InputSignatures[] = {
     {
         .element_type = QHPI_Float16,
@@ -647,31 +583,6 @@ static QHPI_Kernel_v1 matmulqhpihvx8rowfp32storemultithread_float_16_Kernel = {
     .predicate = nullptr
 };
 
-static QHPI_Kernel_v1 matmulqhpihvxstaticrhsprecomputed_float_16_Kernel = {
-    .function_name = "matmulqhpihvxstaticrhsprecomputed_float_16_Execute",
-    .function = nullptr,
-    .resources = QHPI_RESOURCE_HVX,
-    .source_destructive = false,
-    .multithreaded = true,
-    .variable_inputs = false,
-    .variable_outputs = false,
-    .min_inputs = 3,
-    .input_signature =
-        matmulqhpihvxstaticrhsprecomputed_float_16_InputSignatures,
-    .min_outputs = 1,
-    .output_signature =
-        matmulqhpihvx8rowfp32storemultithread_float_16_OutputSignatures,
-    .cost_function =
-        matmulqhpihvx8rowfp32storemultithread_float_16_CostFunc,
-    .sync_block_size = 0,
-    .precomputed_data_size = kStaticRhsPrecomputedBytes,
-    .do_precomputation_function =
-        matmulqhpihvxstaticrhsprecomputed_float_16_Precompute,
-    .function_with_precomputed_data =
-        matmulqhpihvxstaticrhsprecomputed_float_16_Execute,
-    .predicate = nullptr
-};
-
 static QHPI_Kernel_v1 matmulqhpihvxofflineq13rhs_float_16_Kernel = {
     .function_name = "matmulqhpihvxofflineq13rhs_float_16_Execute",
     .function = matmulqhpihvxofflineq13rhs_float_16_Execute,
@@ -748,21 +659,6 @@ QHPI_OpInfo_v1 matmulqhpihvx8rowfp32storemultithreadOpInfo = {
     .name = THIS_PKG_NAME_STR "::" "MatMulQhpiHvx8RowFp32StoreMultithread",
     .num_kernels = 1,
     .kernels = matmulqhpihvx8rowfp32storemultithreadKernels,
-    .early_rewrite = matmulqhpihvx8rowfp32storemultithreadEarlyRewrite,
-    .shape_required = matmulqhpihvx8rowfp32storemultithreadShapeRequired,
-    .shape_legalized = matmulqhpihvx8rowfp32storemultithreadShapeLegal,
-    .build_tile = matmulqhpihvx8rowfp32storemultithreadBuildTile,
-    .late_rewrite = matmulqhpihvx8rowfp32storemultithreadLateRewrite
-};
-
-static QHPI_Kernel_v1 matmulqhpihvxstaticrhsprecomputedKernels[] = {
-    matmulqhpihvxstaticrhsprecomputed_float_16_Kernel
-};
-
-QHPI_OpInfo_v1 matmulqhpihvxstaticrhsprecomputedOpInfo = {
-    .name = THIS_PKG_NAME_STR "::" "MatMulQhpiHvxStaticRhsPrecomputed",
-    .num_kernels = 1,
-    .kernels = matmulqhpihvxstaticrhsprecomputedKernels,
     .early_rewrite = matmulqhpihvx8rowfp32storemultithreadEarlyRewrite,
     .shape_required = matmulqhpihvx8rowfp32storemultithreadShapeRequired,
     .shape_legalized = matmulqhpihvx8rowfp32storemultithreadShapeLegal,
@@ -996,160 +892,6 @@ static uint32_t matmulqhpihvx8rowfp32storemultithread_float_16_Execute(
   return QHPI_Success;
 }
 
-static uint32_t matmulqhpihvxstaticrhsprecomputed_float_16_Precompute(
-    QHPI_RuntimeHandle *handle,
-    void *data,
-    uint32_t num_outputs,
-    QHPI_Tensor **outputs,
-    uint32_t num_inputs,
-    const QHPI_Tensor *const *inputs) {
-  (void)handle;
-  if (data == nullptr || num_inputs != 3 || num_outputs != 1 ||
-      inputs == nullptr || outputs == nullptr || inputs[0] == nullptr ||
-      inputs[1] == nullptr || inputs[2] == nullptr || outputs[0] == nullptr) {
-    return QHPI_ErrorFatal;
-  }
-
-  const QHPI_Shape lhs_shape = qhpi_tensor_shape(inputs[0]);
-  const QHPI_Shape rhs_shape = qhpi_tensor_shape(inputs[1]);
-  const QHPI_Shape static_rhs_shape = qhpi_tensor_shape(inputs[2]);
-  const QHPI_Shape out_shape = qhpi_tensor_shape(outputs[0]);
-  if (lhs_shape.rank != 4 || rhs_shape.rank != 4 ||
-      static_rhs_shape.rank != 4 || out_shape.rank != 4) {
-    return QHPI_ErrorFatal;
-  }
-
-  const uint32_t batch = lhs_shape.dims[0];
-  const uint32_t heads = lhs_shape.dims[1];
-  const uint32_t m = lhs_shape.dims[2];
-  const uint32_t k = lhs_shape.dims[3];
-  const uint32_t n = rhs_shape.dims[3];
-  const uint32_t packed_columns =
-      n < kStaticRhsPackedColumns ? n : kStaticRhsPackedColumns;
-  const uint64_t rhs_elements =
-      (uint64_t)batch * heads * k * packed_columns;
-  if (batch != rhs_shape.dims[0] || heads != rhs_shape.dims[1] ||
-      k != rhs_shape.dims[2] ||
-      static_rhs_shape.dims[0] != batch ||
-      static_rhs_shape.dims[1] != heads ||
-      static_rhs_shape.dims[2] != k ||
-      static_rhs_shape.dims[3] != n ||
-      out_shape.dims[0] != batch || out_shape.dims[1] != heads ||
-      out_shape.dims[2] != m || out_shape.dims[3] != n ||
-      k > 1024 || (m % 4) != 0 || (n % 64) != 0 ||
-      rhs_elements > kStaticRhsMaxElements) {
-    return QHPI_ErrorFatal;
-  }
-
-  const __fp16 *lhs =
-      static_cast<const __fp16 *>(qhpi_tensor_raw_data(inputs[0]));
-  const __fp16 *rhs_fp16 =
-      static_cast<const __fp16 *>(qhpi_tensor_raw_data(inputs[1]));
-  const float *static_rhs =
-      static_cast<const float *>(qhpi_tensor_raw_data(inputs[2]));
-  float *output =
-      static_cast<float *>(qhpi_tensor_raw_data(outputs[0]));
-  if (lhs == nullptr || rhs_fp16 == nullptr ||
-      static_rhs == nullptr || output == nullptr) {
-    return QHPI_ErrorFatal;
-  }
-
-  auto *header = static_cast<StaticRhsPrecomputedHeader *>(data);
-  header->magic = kStaticRhsMagic;
-  header->batch = batch;
-  header->heads = heads;
-  header->m = m;
-  header->k = k;
-  header->n = n;
-  header->lhs = reinterpret_cast<uintptr_t>(lhs);
-  header->rhs_fp16 = reinterpret_cast<uintptr_t>(rhs_fp16);
-  header->output = reinterpret_cast<uintptr_t>(output);
-
-  int16_t *packed_rhs = staticRhsPackedData(data);
-  uint64_t packed_index = 0;
-  for (uint32_t b = 0; b < batch; ++b) {
-    for (uint32_t h = 0; h < heads; ++h) {
-      const uint64_t rhs_base = ((uint64_t)b * heads + h) * k * n;
-      for (uint32_t reduction = 0; reduction < k; ++reduction) {
-        const uint64_t rhs_row = rhs_base + (uint64_t)reduction * n;
-        for (uint32_t col = 0; col < packed_columns; ++col) {
-          packed_rhs[packed_index++] =
-              matmulqhpihvx8rowfp32storemultithreadFloatToQ13(
-                  static_rhs[rhs_row + col]);
-        }
-      }
-  }
-  }
-  return QHPI_Success;
-}
-
-static uint32_t matmulqhpihvxstaticrhsprecomputed_float_16_Execute(
-    QHPI_RuntimeHandle *handle,
-    const void *precomputed_data) {
-  if (precomputed_data == nullptr) {
-    return QHPI_ErrorFatal;
-  }
-  const auto *header =
-      static_cast<const StaticRhsPrecomputedHeader *>(precomputed_data);
-  if (header->magic != kStaticRhsMagic) {
-    return QHPI_ErrorFatal;
-  }
-
-#if MATMUL_QHPI_HVX_8ROW_FP32_STORE_MULTITHREAD_INTRINSICS && \
-    !defined(MATMUL_QHPI_HVX_8ROW_FP32_STORE_MULTITHREAD_FORCE_SCALAR)
-  const __fp16 *lhs = reinterpret_cast<const __fp16 *>(header->lhs);
-  const __fp16 *rhs_fp16 =
-      reinterpret_cast<const __fp16 *>(header->rhs_fp16);
-  float *output = reinterpret_cast<float *>(header->output);
-  const int16_t *rhs = staticRhsPackedData(precomputed_data);
-  const uint32_t num_slices = qhpi_num_slices(handle);
-  const uint32_t slice = qhpi_slice_number(handle);
-  if (lhs == nullptr || rhs_fp16 == nullptr || output == nullptr ||
-      num_slices == 0 ||
-      slice >= num_slices) {
-    return QHPI_ErrorFatal;
-  }
-
-  constexpr uint32_t kMaxReduction = 1024;
-  for (uint32_t b = 0; b < header->batch; ++b) {
-    for (uint32_t h = 0; h < header->heads; ++h) {
-      const uint64_t rhs_base =
-          ((uint64_t)b * header->heads + h) * header->k * header->n;
-      const uint64_t packed_rhs_base =
-          ((uint64_t)b * header->heads + h) * header->k *
-          kStaticRhsPackedColumns;
-      for (uint32_t row = slice * 4; row < header->m;
-           row += num_slices * 4) {
-        const uint64_t lhs_base =
-            (((uint64_t)b * header->heads + h) * header->m + row) *
-            header->k;
-        const uint64_t output_base =
-            (((uint64_t)b * header->heads + h) * header->m + row) *
-            header->n;
-        alignas(128) int16_t lhs_q13[4 * kMaxReduction];
-        matmulqhpihvx8rowfp32storemultithreadPackLhsRowsToQ13(
-            lhs, lhs_q13, lhs_base, 4, header->k);
-        uint32_t col = 0;
-        for (; col < kStaticRhsPackedColumns && col < header->n; col += 64) {
-          matmulqhpihvxstaticrhsprecomputedCompute4x64Hvx(
-              lhs_q13, rhs, output, packed_rhs_base, output_base,
-              header->k, kStaticRhsPackedColumns, header->n, col);
-        }
-        for (; col < header->n; col += 64) {
-          matmulqhpihvx8rowfp32storemultithreadCompute4x64Hvx(
-              lhs_q13, rhs_fp16, output, 0, rhs_base, output_base,
-              header->k, header->n, col);
-        }
-      }
-    }
-  }
-  return QHPI_Success;
-#else
-  (void)handle;
-  return QHPI_ErrorFatal;
-#endif
-}
-
 static uint32_t matmulqhpihvxofflineq13rhs_float_16_Execute(
     QHPI_RuntimeHandle *handle,
     uint32_t num_outputs,
@@ -1240,7 +982,7 @@ static uint32_t matmulqhpihvxofflineq13rhs_float_16_Execute(
               lhs_q13, rhs, output, rhs_base, output_base, k, n, n, col);
         }
         for (; col < n; col += 64) {
-          matmulqhpihvxstaticrhsprecomputedCompute4x64Hvx(
+          matmulqhpihvxofflineq13Compute4x64Hvx(
               lhs_q13, rhs, output, rhs_base, output_base, k, n, n, col);
         }
       }
