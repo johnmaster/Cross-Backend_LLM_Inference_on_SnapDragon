@@ -82,10 +82,12 @@ converter 输出、OpPackage API、编译参数和 HTP graph optimization 上表
 │   └── ai-hub/                   # Qualcomm AI Hub 使用笔记
 ├── qnn_quantization/             # 11 个递进的 QNN 量化实验
 ├── qnn_custom_ops/               # standalone QNN/QHPI/HVX MatMul OpPackage 实验
-│   └── qwen_flash_attention_hvx/ # Qwen GQA blockwise online-softmax 实验
+│   └── 17_qwen_flash_attention_hvx/ # Qwen GQA blockwise online-softmax 实验
 ├── tiny_llm_block/               # 手写 Qwen-style block 和 QNN builtin baseline
 ├── tiny_llm_block_custom_matmul/ # tiny block projection custom-op 替换
-├── qwen_block_custom_qnn/        # 真实 Qwen2.5-0.5B layer0 custom QNN 案例
+├── qwen_block_custom_qnn/        # 真实 Qwen2.5-0.5B layer0 QNN 实验
+│   ├── README.md              # prefill q_proj custom-op 优化主线
+│   └── KV_CACHE_EXPERIMENTS.md # KV cache decode 与 persistent runner
 └── scripts/                      # llama.cpp benchmark 与 QNN throughput 脚本
 ```
 
@@ -121,7 +123,7 @@ QNN 量化实验按编号组织：
 
 ### 3. HTP Custom MatMul
 
-[qnn_custom_ops/matmul/README.md](qnn_custom_ops/matmul/README.md) 记录普通 QNN
+[qnn_custom_ops/01_matmul/README.md](qnn_custom_ops/01_matmul/README.md) 记录普通 QNN
 HTP Custom OpPackage 的生成、编译、部署和验证。之后的 `matmul_qhpi_*` 目录分别
 验证单一变量：
 
@@ -197,8 +199,14 @@ q_proj_cycles=146244
 
 ### 5. 真实 Qwen2.5-0.5B Decoder Layer
 
-[qwen_block_custom_qnn/README.md](qwen_block_custom_qnn/README.md) 是当前完整度最高的
-案例。它直接读取本地 `Qwen/Qwen2.5-0.5B-Instruct` 的 `config.json` 和
+这个真实 layer 0 案例现在按实验边界分为两份文档：
+
+- [qwen_block_custom_qnn/README.md](qwen_block_custom_qnn/README.md)：prefill 与
+  device-Q13 custom q_proj 的 M0–M9 优化主线。
+- [qwen_block_custom_qnn/KV_CACHE_EXPERIMENTS.md](qwen_block_custom_qnn/KV_CACHE_EXPERIMENTS.md)：
+  fixed-shape decode、grouped-GQA、delta KV、persistent runner 和 shared memory 实验。
+
+实验直接读取本地 `Qwen/Qwen2.5-0.5B-Instruct` 的 `config.json` 和
 `model.safetensors`，手写真实 layer 0 的：
 
 ```text
@@ -212,7 +220,7 @@ RMSNorm
 ```
 
 prefill 固定输入为 `[1,16,896]`，decode 使用 token=1 和真实 KV cache。
-当前已经完成：
+两条实验主线已完成：
 
 1. 真实权重下载与文件说明。
 2. PyTorch layer0 prefill 和固定 shape ONNX 导出。
@@ -420,5 +428,5 @@ QAIRT SDK、Hexagon SDK/Tools、Android NDK，并在设备上准备相应 QNN ru
 - [Tiny Qwen-style block](tiny_llm_block/README.md)
 - [Tiny block custom MatMul](tiny_llm_block_custom_matmul/README.md)
 - [真实 Qwen2.5 block custom QNN](qwen_block_custom_qnn/README.md)
-- [真实 Qwen2.5 block 优化实验日志](qwen_block_custom_qnn/OPTIMIZATION_LOG.md)
-- [Qwen GQA FlashAttention QHPI/HTP](qnn_custom_ops/qwen_flash_attention_hvx/README.md)
+- [真实 Qwen2.5 block KV cache 实验](qwen_block_custom_qnn/KV_CACHE_EXPERIMENTS.md)
+- [Qwen GQA FlashAttention QHPI/HTP](qnn_custom_ops/17_qwen_flash_attention_hvx/README.md)

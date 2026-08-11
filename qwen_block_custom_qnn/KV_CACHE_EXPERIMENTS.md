@@ -567,7 +567,7 @@ builtin attention。
 
 后续已将该实验抽离为独立的动态 KV、GQA-aware、32-token blockwise
 online-softmax OpPackage，见
-[`qnn_custom_ops/qwen_flash_attention_hvx`](../qnn_custom_ops/qwen_flash_attention_hvx/README.md)。
+[`qnn_custom_ops/17_qwen_flash_attention_hvx`](../qnn_custom_ops/17_qwen_flash_attention_hvx/README.md)。
 独立版本成功接回真实 graph，但当前标量 FP32 实现的 NetRun 仍为 `23338 us`，
 hidden cosine 为 `0.999947424`，因此同样未采用。
 
